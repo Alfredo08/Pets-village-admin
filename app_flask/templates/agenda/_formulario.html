@@ -1,0 +1,437 @@
+<div class="row g-4">
+
+    <div class="col-12 col-lg-6">
+        <label
+            for="buscar_cliente"
+            class="form-label"
+        >
+            Buscar cliente
+        </label>
+
+        <input
+            type="search"
+            id="buscar_cliente"
+            class="form-control mb-2"
+            placeholder="Nombre, teléfono o correo"
+            autocomplete="off"
+        >
+
+        <label
+            for="id_cliente"
+            class="form-label"
+        >
+            Cliente *
+        </label>
+
+        <select
+            id="id_cliente"
+            name="id_cliente"
+            class="form-select"
+            required
+        >
+            <option value="">
+                Selecciona un cliente
+            </option>
+
+            {% for cliente in clientes %}
+                <option
+                    value="{{ cliente.id_cliente }}"
+                    data-busqueda="{{
+                        (
+                            cliente.nombre ~ ' ' ~
+                            (cliente.telefono or '') ~ ' ' ~
+                            (cliente.correo or '')
+                        )|lower
+                    }}"
+                    {% if datos.get("id_cliente")|string
+                        == cliente.id_cliente|string %}
+                        selected
+                    {% endif %}
+                >
+                    {{ cliente.nombre }}
+
+                    {% if cliente.telefono %}
+                        — {{ cliente.telefono }}
+                    {% endif %}
+                </option>
+            {% endfor %}
+        </select>
+
+        <small
+            id="resultado_clientes"
+            class="text-muted d-block mt-2"
+        ></small>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <label
+            for="id_mascota"
+            class="form-label"
+        >
+            Mascota *
+        </label>
+
+        <select
+            id="id_mascota"
+            name="id_mascota"
+            class="form-select"
+            required
+        >
+            <option value="">
+                Selecciona primero un cliente
+            </option>
+
+            {% for mascota in mascotas %}
+                <option
+                    value="{{ mascota.id_mascota }}"
+                    data-cliente="{{ mascota.id_cliente }}"
+                    {% if datos.get("id_mascota")|string
+                        == mascota.id_mascota|string %}
+                        selected
+                    {% endif %}
+                >
+                    {{ mascota.nombre }}
+                    — {{ mascota.nombre_cliente }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <label
+            for="id_servicio"
+            class="form-label"
+        >
+            Servicio principal *
+        </label>
+
+        <select
+            id="id_servicio"
+            name="id_servicio"
+            class="form-select"
+            required
+        >
+            <option value="">
+                Selecciona un servicio
+            </option>
+
+            {% for servicio in servicios %}
+                <option
+                    value="{{ servicio.id_servicio }}"
+                    {% if datos.get("id_servicio")|string
+                        == servicio.id_servicio|string %}
+                        selected
+                    {% endif %}
+                >
+                    {{ servicio.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <label
+            for="id_usuario"
+            class="form-label"
+        >
+            Estilista *
+        </label>
+
+        <select
+            id="id_usuario"
+            name="id_usuario"
+            class="form-select"
+            required
+        >
+            <option value="">
+                Selecciona un estilista
+            </option>
+
+            {% for estilista in estilistas %}
+                <option
+                    value="{{ estilista.id_usuario }}"
+                    {% if datos.get("id_usuario")|string
+                        == estilista.id_usuario|string %}
+                        selected
+                    {% endif %}
+                >
+                    {{ estilista.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+        <label
+            for="fecha"
+            class="form-label"
+        >
+            Fecha *
+        </label>
+
+        <input
+            type="date"
+            id="fecha"
+            name="fecha"
+            class="form-control"
+            value="{{ datos.get(
+                'fecha',
+                fecha_seleccionada
+            ) }}"
+            required
+        >
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+        <label
+            for="hora_inicio"
+            class="form-label"
+        >
+            Hora *
+        </label>
+
+        <select
+            id="hora_inicio"
+            name="hora_inicio"
+            class="form-select"
+            required
+        >
+            <option value="">
+                Selecciona
+            </option>
+
+            {% for hora in horarios %}
+                <option
+                    value="{{ hora }}"
+                    {% if datos.get("hora_inicio") == hora %}
+                        selected
+                    {% endif %}
+                >
+                    {{ hora }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+        <label
+            for="duracion_minutos"
+            class="form-label"
+        >
+            Duración *
+        </label>
+
+        <select
+            id="duracion_minutos"
+            name="duracion_minutos"
+            class="form-select"
+            required
+        >
+            {% for duracion in [30, 60, 90, 120] %}
+                <option
+                    value="{{ duracion }}"
+                    {% if datos.get(
+                        "duracion_minutos",
+                        "60"
+                    )|string == duracion|string %}
+                        selected
+                    {% endif %}
+                >
+                    {{ duracion }} minutos
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+        <label
+            for="estado"
+            class="form-label"
+        >
+            Estado inicial *
+        </label>
+
+        <select
+            id="estado"
+            name="estado"
+            class="form-select"
+            required
+        >
+            <option
+                value="pendiente"
+                {% if datos.get(
+                    "estado",
+                    "pendiente"
+                ) == "pendiente" %}
+                    selected
+                {% endif %}
+            >
+                Pendiente
+            </option>
+
+            <option
+                value="confirmada"
+                {% if datos.get("estado")
+                    == "confirmada" %}
+                    selected
+                {% endif %}
+            >
+                Confirmada
+            </option>
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label
+            for="notas"
+            class="form-label"
+        >
+            Notas
+        </label>
+
+        <textarea
+            id="notas"
+            name="notas"
+            class="form-control"
+            rows="4"
+            placeholder="Indicaciones de la cita o del servicio"
+        >{{ datos.get("notas", "") }}</textarea>
+    </div>
+
+</div>
+
+<hr class="my-4">
+
+<div class="d-flex justify-content-end gap-2">
+
+    <a
+        href="{{ url_cancelar }}"
+        class="btn btn-outline-secondary"
+    >
+        Cancelar
+    </a>
+
+    <button
+        type="submit"
+        class="btn btn-pets"
+    >
+        {{ texto_boton }}
+    </button>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const txtBuscar = document.getElementById("buscar_cliente");
+    const cmbClientes = document.getElementById("id_cliente");
+    const cmbMascotas = document.getElementById("id_mascota");
+    const lblResultado = document.getElementById("resultado_clientes");
+
+    if (!txtBuscar) return;
+
+    const opcionesClientes = Array.from(cmbClientes.options);
+    const opcionesMascotas = Array.from(cmbMascotas.options);
+
+    function filtrarClientes() {
+
+        const termino = txtBuscar.value
+            .trim()
+            .toLowerCase();
+
+        let encontrados = 0;
+
+        opcionesClientes.forEach(opcion => {
+
+            if (opcion.value === "")
+                return;
+
+            const texto = (
+                opcion.dataset.busqueda || ""
+            ).toLowerCase();
+
+            const visible =
+                termino === "" ||
+                texto.includes(termino);
+
+            opcion.hidden = !visible;
+
+            if (visible)
+                encontrados++;
+        });
+
+        if (lblResultado) {
+
+            if (termino === "")
+                lblResultado.textContent = "";
+            else
+                lblResultado.textContent =
+                    encontrados + " cliente(s) encontrado(s)";
+        }
+
+    }
+
+    function filtrarMascotas() {
+
+        const cliente = cmbClientes.value;
+
+        opcionesMascotas.forEach(opcion => {
+
+            if (opcion.value === "")
+                return;
+
+            opcion.hidden =
+                opcion.dataset.cliente !== cliente;
+        });
+
+        if (
+            cmbMascotas.selectedOptions.length &&
+            cmbMascotas.selectedOptions[0].dataset.cliente !== cliente
+        ){
+            cmbMascotas.value = "";
+        }
+
+    }
+
+    txtBuscar.addEventListener(
+        "keyup",
+        filtrarClientes
+    );
+
+    cmbClientes.addEventListener(
+        "change",
+        filtrarMascotas
+    );
+
+    filtrarClientes();
+    filtrarMascotas();
+    
+    const formularioOrden = document.querySelector(
+        'form[action*="/agenda/"]'
+    );
+
+    if (formularioOrden) {
+        formularioOrden.addEventListener("submit", function (evento) {
+            if (formularioOrden.dataset.enviando === "true") {
+                evento.preventDefault();
+                return;
+            }
+
+            formularioOrden.dataset.enviando = "true";
+
+            const botonGuardar = formularioOrden.querySelector(
+                'button[type="submit"]'
+            );
+
+            if (botonGuardar) {
+                botonGuardar.disabled = true;
+                botonGuardar.dataset.textoOriginal =
+                    botonGuardar.textContent;
+
+                botonGuardar.textContent = "Guardando...";
+            }
+        });
+    }
+
+});
+</script>

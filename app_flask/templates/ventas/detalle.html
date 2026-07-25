@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  {{ venta.folio }} | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Venta completada</p>
+
+      <h1 class="page-title">{{ venta.folio }}</h1>
+
+      <p class="page-description">Orden {{ venta.folio_orden }}
+        · {{ venta.nombre_mascota }}</p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/agenda" class="btn btn-outline-secondary">Volver a agenda</a>
+
+      <button type="button" class="btn btn-pets" onclick="window.print()">Imprimir ticket</button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-8">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Conceptos</h2>
+
+            <p class="panel-description">Servicios y productos incluidos.</p>
+          </div>
+        </div>
+
+        <div class="sale-detail-list">
+          {% for detalle in detalles %}
+            <article class="sale-detail-item">
+              <div>
+                <strong>{{ detalle.descripcion }}</strong>
+
+                <small>
+                  {% if detalle.tipo == 'servicio' %}
+                    Servicio
+                  {% else %}
+                    Producto
+                  {% endif %}
+                </small>
+              </div>
+
+              <div class="sale-detail-item__quantity">{{ detalle.cantidad }}
+                × ${{ '{:,.2f}'.format(detalle.precio_unitario) }}</div>
+
+              <strong>${{ '{:,.2f}'.format(detalle.subtotal) }}</strong>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Resumen</h2>
+
+            <p class="panel-description">Información del cobro.</p>
+          </div>
+        </div>
+
+        <div class="sale-summary">
+          <div>
+            <span>Cliente</span>
+            <strong>{{ venta.nombre_cliente }}</strong>
+          </div>
+
+          <div>
+            <span>Mascota</span>
+            <strong>{{ venta.nombre_mascota }}</strong>
+          </div>
+
+          <div>
+            <span>Subtotal</span>
+            <strong>${{ '{:,.2f}'.format(venta.subtotal) }}</strong>
+          </div>
+
+          <div>
+            <span>Descuento</span>
+            <strong>${{ '{:,.2f}'.format(venta.descuento) }}</strong>
+          </div>
+
+          <div>
+            <span>Impuestos</span>
+            <strong>${{ '{:,.2f}'.format(venta.impuestos) }}</strong>
+          </div>
+
+          <div class="sale-summary__total">
+            <span>Total</span>
+            <strong>${{ '{:,.2f}'.format(venta.total) }}</strong>
+          </div>
+        </div>
+
+        <hr class="my-4" />
+
+        <h3 class="panel-title mb-3">Pagos</h3>
+
+        <div class="sale-payment-list">
+          {% for pago in pagos %}
+            <div class="sale-payment-item">
+              <span>{{ pago.metodo|capitalize }}</span>
+
+              <strong>${{ '{:,.2f}'.format(pago.monto) }}</strong>
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if cambio > 0 %}
+          <div class="sale-change">
+            <span>Cambio</span>
+
+            <strong>${{ '{:,.2f}'.format(cambio) }}</strong>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+{% endblock %}

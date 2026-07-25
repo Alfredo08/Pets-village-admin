@@ -1,0 +1,478 @@
+{% set datos = formulario or {} %}
+
+{% if datos %}
+    {% set nombre_actual = datos.get("nombre", "") %}
+    {% set descripcion_actual = datos.get("descripcion", "") %}
+    {% set tipo_actual = datos.get("tipo", "adicional") %}
+    {% set tarifas_actuales = datos.get("tarifas", []) %}
+{% else %}
+    {% set nombre_actual = servicio.nombre if servicio else "" %}
+    {% set descripcion_actual = servicio.descripcion if servicio else "" %}
+    {% set tipo_actual = servicio.tipo if servicio else "adicional" %}
+    {% set tarifas_actuales = servicio.tarifas if servicio else [] %}
+{% endif %}
+
+<section class="panel">
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <label for="nombre" class="form-label">
+                Nombre del servicio *
+            </label>
+
+            <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                class="form-control"
+                value="{{ nombre_actual }}"
+                maxlength="100"
+                required
+                autofocus
+            >
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <label for="tipo" class="form-label">
+                Tipo de servicio *
+            </label>
+
+            <select
+                id="tipo"
+                name="tipo"
+                class="form-select"
+                required
+            >
+                <option
+                    value="paquete"
+                    {% if tipo_actual == "paquete" %}selected{% endif %}
+                >
+                    Paquete
+                </option>
+
+                <option
+                    value="complemento"
+                    {% if tipo_actual == "complemento" %}selected{% endif %}
+                >
+                    Complemento
+                </option>
+
+                <option
+                    value="adicional"
+                    {% if tipo_actual == "adicional" %}selected{% endif %}
+                >
+                    Servicio adicional
+                </option>
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label for="descripcion" class="form-label">
+                Descripción
+            </label>
+
+            <textarea
+                id="descripcion"
+                name="descripcion"
+                class="form-control"
+                rows="4"
+            >{{ descripcion_actual or "" }}</textarea>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="panel-title mb-1">
+                Tarifas
+            </h2>
+
+            <p class="panel-description">
+                Define el precio según tamaño y tipo de pelo.
+            </p>
+        </div>
+
+        <button
+            type="button"
+            id="agregar-tarifa"
+            class="btn btn-outline-secondary"
+        >
+            + Agregar tarifa
+        </button>
+    </div>
+
+    <div id="contenedor-tarifas">
+
+        {% if tarifas_actuales %}
+
+            {% for tarifa in tarifas_actuales %}
+
+                <div class="tarifa-fila border rounded p-3 mb-3">
+
+                    <input
+                        type="hidden"
+                        name="id_tarifa[]"
+                        value="{{ tarifa.id_tarifa
+                            if tarifa.id_tarifa is defined
+                            else tarifa.get('id_tarifa', '') }}"
+                    >
+
+                    <div class="row g-3 align-items-end">
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">
+                                Tamaño *
+                            </label>
+
+                            {% set tamano_actual =
+                                tarifa.tamano
+                                if tarifa.tamano is defined
+                                else tarifa.get("tamano", "")
+                            %}
+
+                            <select
+                                name="tamano[]"
+                                class="form-select"
+                                required
+                            >
+                                <option value="">Selecciona</option>
+
+                                <option
+                                    value="toy_chico"
+                                    {% if tamano_actual == "toy_chico" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Toy / Chico
+                                </option>
+
+                                <option
+                                    value="mediano"
+                                    {% if tamano_actual == "mediano" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Mediano
+                                </option>
+
+                                <option
+                                    value="grande"
+                                    {% if tamano_actual == "grande" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Grande
+                                </option>
+
+                                <option
+                                    value="extra_grande"
+                                    {% if tamano_actual == "extra_grande" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Extra grande
+                                </option>
+
+                                <option
+                                    value="cualquier_tamano"
+                                    {% if tamano_actual == "cualquier_tamano" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Cualquier tamaño
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">
+                                Tipo de pelo *
+                            </label>
+
+                            {% set pelo_actual =
+                                tarifa.tipo_pelo
+                                if tarifa.tipo_pelo is defined
+                                else tarifa.get("tipo_pelo", "")
+                            %}
+
+                            <select
+                                name="tipo_pelo[]"
+                                class="form-select"
+                                required
+                            >
+                                <option value="">Selecciona</option>
+
+                                <option
+                                    value="corto"
+                                    {% if pelo_actual == "corto" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Pelo corto
+                                </option>
+
+                                <option
+                                    value="largo"
+                                    {% if pelo_actual == "largo" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Pelo largo
+                                </option>
+
+                                <option
+                                    value="cualquier_tipo"
+                                    {% if pelo_actual == "cualquier_tipo" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Cualquier tipo
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-3">
+                            <label class="form-label">
+                                Precio *
+                            </label>
+
+                            <input
+                                type="number"
+                                name="precio[]"
+                                class="form-control"
+                                min="0"
+                                step="0.01"
+                                value="{{ tarifa.precio
+                                    if tarifa.precio is defined
+                                    else tarifa.get('precio', '') }}"
+                                required
+                            >
+                        </div>
+
+                        <div class="col-12 col-md-1">
+                            <button
+                                type="button"
+                                class="btn btn-outline-danger eliminar-tarifa w-100"
+                                aria-label="Eliminar tarifa"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="tarifa-fila border rounded p-3 mb-3">
+
+                <input
+                    type="hidden"
+                    name="id_tarifa[]"
+                    value=""
+                >
+
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">
+                            Tamaño *
+                        </label>
+
+                        <select
+                            name="tamano[]"
+                            class="form-select"
+                            required
+                        >
+                            <option value="">Selecciona</option>
+                            <option value="toy_chico">Toy / Chico</option>
+                            <option value="mediano">Mediano</option>
+                            <option value="grande">Grande</option>
+                            <option value="extra_grande">Extra grande</option>
+                            <option value="cualquier_tamano">
+                                Cualquier tamaño
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">
+                            Tipo de pelo *
+                        </label>
+
+                        <select
+                            name="tipo_pelo[]"
+                            class="form-select"
+                            required
+                        >
+                            <option value="">Selecciona</option>
+                            <option value="corto">Pelo corto</option>
+                            <option value="largo">Pelo largo</option>
+                            <option value="cualquier_tipo">
+                                Cualquier tipo
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">
+                            Precio *
+                        </label>
+
+                        <input
+                            type="number"
+                            name="precio[]"
+                            class="form-control"
+                            min="0"
+                            step="0.01"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-12 col-md-1">
+                        <button
+                            type="button"
+                            class="btn btn-outline-danger eliminar-tarifa w-100"
+                        >
+                            ×
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        {% endif %}
+
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-end gap-2">
+        <a
+            href="/servicios"
+            class="btn btn-outline-secondary"
+        >
+            Cancelar
+        </a>
+
+        <button
+            type="submit"
+            class="btn btn-pets"
+        >
+            {{ texto_boton }}
+        </button>
+    </div>
+
+</section>
+
+<template id="plantilla-tarifa">
+    <div class="tarifa-fila border rounded p-3 mb-3">
+
+        <input
+            type="hidden"
+            name="id_tarifa[]"
+            value=""
+        >
+
+        <div class="row g-3 align-items-end">
+
+            <div class="col-12 col-md-4">
+                <label class="form-label">
+                    Tamaño *
+                </label>
+
+                <select
+                    name="tamano[]"
+                    class="form-select"
+                    required
+                >
+                    <option value="">Selecciona</option>
+                    <option value="toy_chico">Toy / Chico</option>
+                    <option value="mediano">Mediano</option>
+                    <option value="grande">Grande</option>
+                    <option value="extra_grande">Extra grande</option>
+                    <option value="cualquier_tamano">
+                        Cualquier tamaño
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label class="form-label">
+                    Tipo de pelo *
+                </label>
+
+                <select
+                    name="tipo_pelo[]"
+                    class="form-select"
+                    required
+                >
+                    <option value="">Selecciona</option>
+                    <option value="corto">Pelo corto</option>
+                    <option value="largo">Pelo largo</option>
+                    <option value="cualquier_tipo">
+                        Cualquier tipo
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+                <label class="form-label">
+                    Precio *
+                </label>
+
+                <input
+                    type="number"
+                    name="precio[]"
+                    class="form-control"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+            </div>
+
+            <div class="col-12 col-md-1">
+                <button
+                    type="button"
+                    class="btn btn-outline-danger eliminar-tarifa w-100"
+                >
+                    ×
+                </button>
+            </div>
+
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const contenedor = document.getElementById("contenedor-tarifas");
+    const botonAgregar = document.getElementById("agregar-tarifa");
+    const plantilla = document.getElementById("plantilla-tarifa");
+
+    botonAgregar.addEventListener("click", () => {
+        const clon = plantilla.content.cloneNode(true);
+        contenedor.appendChild(clon);
+    });
+
+    contenedor.addEventListener("click", (evento) => {
+        const boton = evento.target.closest(".eliminar-tarifa");
+
+        if (!boton) {
+            return;
+        }
+
+        const filas = contenedor.querySelectorAll(".tarifa-fila");
+
+        if (filas.length === 1) {
+            alert("El servicio debe tener al menos una tarifa.");
+            return;
+        }
+
+        boton.closest(".tarifa-fila").remove();
+    });
+});
+</script>

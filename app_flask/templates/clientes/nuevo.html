@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Nuevo cliente | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Clientes</p>
+      <h1 class="page-title">Nuevo cliente</h1>
+
+      <p class="page-description">Registra los datos del propietario de la mascota.</p>
+    </div>
+
+    <a href="/clientes" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <form action="/clientes/crear" method="POST">
+    {% set cliente = null %}
+    {% set texto_boton = 'Guardar cliente' %}
+    {% set url_cancelar = '/clientes' %}
+
+    {% include 'clientes/_formulario.html' %}
+  </form>
+{% endblock %}

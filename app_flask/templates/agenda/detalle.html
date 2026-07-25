@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+{{ orden.folio }} | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">
+            Orden de servicio
+        </p>
+
+        <h1 class="page-title">
+            {{ orden.folio }}
+        </h1>
+
+        <p class="page-description">
+            Atención programada para {{ orden.nombre_mascota }}.
+        </p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a
+            href="/agenda?fecha={{ orden.fecha }}"
+            class="btn btn-outline-secondary"
+        >
+            Volver
+        </a>
+
+        {% if orden.estado not in [
+            "finalizada",
+            "cancelada",
+            "no_asistio"
+        ] %}
+            <a
+                href="/agenda/orden/{{ orden.id_orden }}/editar"
+                class="btn btn-outline-secondary"
+            >
+                Editar orden
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<section class="order-progress">
+
+    {% set estados_flujo = [
+        ("pendiente", "Pendiente"),
+        ("confirmada", "Confirmada"),
+        ("en_proceso", "En proceso"),
+        ("finalizada", "Finalizada")
+    ] %}
+
+    {% set posiciones = {
+        "pendiente": 0,
+        "confirmada": 1,
+        "en_proceso": 2,
+        "finalizada": 3
+    } %}
+
+    {% set posicion_actual = posiciones.get(orden.estado, -1) %}
+
+    {% for valor, etiqueta in estados_flujo %}
+
+        {% set posicion = posiciones.get(valor) %}
+
+        <div
+            class="order-progress__step
+                {% if posicion < posicion_actual %}
+                    order-progress__step--complete
+                {% elif posicion == posicion_actual %}
+                    order-progress__step--active
+                {% endif %}
+            "
+        >
+            <span class="order-progress__marker">
+                {% if posicion < posicion_actual %}
+                    ✓
+                {% else %}
+                    {{ loop.index }}
+                {% endif %}
+            </span>
+
+            <span class="order-progress__label">
+                {{ etiqueta }}
+            </span>
+        </div>
+
+    {% endfor %}
+
+</section>
+
+{% if orden.estado == "cancelada" %}
+
+    <div class="alert alert-danger">
+        <strong>Orden cancelada.</strong>
+        Esta atención ya no ocupa espacio operativo en la agenda.
+    </div>
+
+{% elif orden.estado == "no_asistio" %}
+
+    <div class="alert alert-warning">
+        <strong>El cliente no asistió.</strong>
+        La orden permanece en el historial.
+    </div>
+
+{% endif %}
+
+<div class="row g-4">
+
+    <div class="col-12 col-xl-8">
+
+        <section class="panel">
+
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        Información de la orden
+                    </h2>
+
+                    <p class="panel-description">
+                        Datos de la atención programada.
+                    </p>
+                </div>
+
+                {% if orden.estado == "pendiente" %}
+                    <span class="status-badge status-badge--warning">
+                        Pendiente
+                    </span>
+
+                {% elif orden.estado == "confirmada" %}
+                    <span class="status-badge status-badge--success">
+                        Confirmada
+                    </span>
+
+                {% elif orden.estado == "en_proceso" %}
+                    <span class="status-badge status-badge--info">
+                        En proceso
+                    </span>
+
+                {% elif orden.estado == "finalizada" %}
+                    <span class="status-badge status-badge--success">
+                        Finalizada
+                    </span>
+
+                {% elif orden.estado == "cancelada" %}
+                    <span class="status-badge status-badge--danger">
+                        Cancelada
+                    </span>
+
+                {% else %}
+                    <span class="status-badge status-badge--danger">
+                        No asistió
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="order-detail-grid">
+
+                <div class="order-detail-item">
+                    <span class="order-detail-item__label">
+                        Cliente
+                    </span>
+
+                    <a
+                        href="/clientes/{{ orden.id_cliente }}"
+                        class="order-detail-item__link"
+                    >
+                        {{ orden.nombre_cliente }}
+                    </a>
+
+                    <small>
+                        {{ orden.telefono_cliente or "Sin teléfono" }}
+                    </small>
+                </div>
+
+                <div class="order-detail-item">
+                    <span class="order-detail-item__label">
+                        Mascota
+                    </span>
+
+                    <a
+                        href="/mascotas/{{ orden.id_mascota }}"
+                        class="order-detail-item__link"
+                    >
+                        {{ orden.nombre_mascota }}
+                    </a>
+
+                    <small>
+                        {{ orden.numero_expediente or "Sin expediente" }}
+                    </small>
+                </div>
+
+                <div class="order-detail-item">
+                    <span class="order-detail-item__label">
+                        Servicio principal
+                    </span>
+
+                    <strong>
+                        {{ orden.nombre_servicio }}
+                    </strong>
+                </div>
+
+                <div class="order-detail-item">
+                    <span class="order-detail-item__label">
+                        Estilista
+                    </span>
+
+                    <strong>
+                        {{ orden.nombre_estilista }}
+                    </strong>
+                </div>
+
+                <div class="order-detail-item">
+                    <span class="order-detail-item__label">
+                        Fecha
+                    </span>
+
+                    <strong>
+                        {{ orden.fecha.strftime("%d/%m/%Y") }}
+                    </strong>
+                </div>
+
+                <div class="order-detail-item">
+                    <span class="order-detail-item__label">
+                        Hora de inicio
+                    </span>
+
+                    <strong>
+                        {% if orden.hora_inicio.total_seconds is defined %}
+                            {% set segundos =
+                                orden.hora_inicio.total_seconds()|int %}
+                            {% set horas = segundos // 3600 %}
+                            {% set minutos = (segundos % 3600) // 60 %}
+
+                            {{ "%02d:%02d"|format(horas, minutos) }}
+                        {% else %}
+                            {{ orden.hora_inicio }}
+                        {% endif %}
+                    </strong>
+                </div>
+
+                <div class="order-detail-item">
+                    <span class="order-detail-item__label">
+                        Duración
+                    </span>
+
+                    <strong>
+                        {{ orden.duracion_minutos }} minutos
+                    </strong>
+                </div>
+
+                <div class="order-detail-item">
+                    <span class="order-detail-item__label">
+                        Raza y características
+                    </span>
+
+                    <strong>
+                        {{ orden.raza or "Raza no registrada" }}
+                    </strong>
+
+                    <small>
+                        {% if orden.tamano == "toy_chico" %}
+                            Toy / Chico
+                        {% elif orden.tamano == "mediano" %}
+                            Mediano
+                        {% elif orden.tamano == "grande" %}
+                            Grande
+                        {% elif orden.tamano == "extra_grande" %}
+                            Extra grande
+                        {% endif %}
+
+                        {% if orden.tipo_pelo %}
+                            · Pelo {{ orden.tipo_pelo }}
+                        {% endif %}
+                    </small>
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <div>
+                <span class="order-detail-item__label">
+                    Notas
+                </span>
+
+                <p class="mb-0">
+                    {{ orden.notas or "Sin notas registradas." }}
+                </p>
+            </div>
+
+        </section>
+
+    </div>
+
+    <div class="col-12 col-xl-4">
+
+        <section class="panel">
+
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        Acciones
+                    </h2>
+
+                    <p class="panel-description">
+                        Administra el estado de la atención.
+                    </p>
+                </div>
+            </div>
+
+            <div class="order-actions">
+
+                {% if orden.estado == "pendiente" %}
+
+                    <form
+                        action="/agenda/orden/{{ orden.id_orden }}/estado"
+                        method="POST"
+                    >
+                        <input
+                            type="hidden"
+                            name="estado"
+                            value="confirmada"
+                        >
+
+                        <button
+                            type="submit"
+                            class="btn btn-pets w-100"
+                        >
+                            Confirmar orden
+                        </button>
+                    </form>
+
+                {% elif orden.estado == "confirmada" %}
+
+                    <form
+                        action="/agenda/orden/{{ orden.id_orden }}/estado"
+                        method="POST"
+                    >
+                        <input
+                            type="hidden"
+                            name="estado"
+                            value="en_proceso"
+                        >
+
+                        <button
+                            type="submit"
+                            class="btn btn-pets w-100"
+                        >
+                            Iniciar servicio
+                        </button>
+                    </form>
+
+                {% elif orden.estado == "en_proceso" %}
+
+                    <a
+                        href="/ventas/nueva?orden={{ orden.id_orden }}"
+                        class="btn btn-pets w-100"
+                    >
+                        Abrir Punto de Venta
+                    </a>
+
+                    <p class="text-muted small mb-0">
+                        El POS se desarrollará en el siguiente módulo.
+                    </p>
+
+                {% elif orden.estado == "finalizada" %}
+
+                    <div class="alert alert-success mb-0">
+                        Esta orden fue finalizada correctamente.
+                    </div>
+
+                {% endif %}
+
+                {% if orden.estado in [
+                    "pendiente",
+                    "confirmada"
+                ] %}
+
+                    <form
+                        action="/agenda/orden/{{ orden.id_orden }}/estado"
+                        method="POST"
+                    >
+                        <input
+                            type="hidden"
+                            name="estado"
+                            value="no_asistio"
+                        >
+
+                        <button
+                            type="submit"
+                            class="btn btn-outline-warning w-100"
+                        >
+                            Marcar no asistió
+                        </button>
+                    </form>
+
+                    <form
+                        action="/agenda/orden/{{ orden.id_orden }}/estado"
+                        method="POST"
+                        onsubmit="
+                            return confirm(
+                                '¿Seguro que deseas cancelar esta orden?'
+                            );
+                        "
+                    >
+                        <input
+                            type="hidden"
+                            name="estado"
+                            value="cancelada"
+                        >
+
+                        <button
+                            type="submit"
+                            class="btn btn-outline-danger w-100"
+                        >
+                            Cancelar orden
+                        </button>
+                    </form>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+{% macro info_card(titulo) %}
+  <section class="info-card">
+    <div class="info-card__header">
+      <h3 class="info-card__title">{{ titulo }}</h3>
+    </div>
+
+    <div class="info-card__body">{{ caller() }}</div>
+  </section>
+{% endmacro %}
+
+{% macro empty_state(icono, titulo, descripcion) %}
+  <div class="empty-state-module">
+    <div class="empty-state-module__icon">{{ icono }}</div>
+
+    <h3 class="empty-state-module__title">{{ titulo }}</h3>
+
+    <p class="empty-state-module__description">{{ descripcion }}</p>
+  </div>
+{% endmacro %}

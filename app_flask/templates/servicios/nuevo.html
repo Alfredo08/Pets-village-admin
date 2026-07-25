@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Nuevo servicio | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Servicios</p>
+      <h1 class="page-title">Nuevo servicio</h1>
+
+      <p class="page-description">Registra el servicio y sus tarifas.</p>
+    </div>
+
+    <a href="/servicios" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <form action="/servicios/crear" method="POST">
+    {% set servicio = null %}
+    {% set texto_boton = 'Guardar servicio' %}
+
+    {% include 'servicios/_formulario.html' %}
+  </form>
+{% endblock %}

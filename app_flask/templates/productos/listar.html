@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Productos | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Inventario</p>
+      <h1 class="page-title">Productos</h1>
+      <p class="page-description">Administra los productos disponibles para venta.</p>
+    </div>
+
+    <a href="/productos/nuevo" class="btn btn-pets">+ Nuevo producto</a>
+  </div>
+
+  <section class="panel">
+    <form method="GET" action="/productos" class="row g-3 mb-4">
+      <div class="col-12 col-md-8 col-xl-5">
+        <label for="buscar" class="form-label">Buscar producto</label>
+
+        <input type="search" id="buscar" name="buscar" class="form-control" value="{{ termino }}" placeholder="Nombre, categoría o código de barras" />
+      </div>
+
+      <div class="col-12 col-md-auto d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-pets">Buscar</button>
+
+        {% if termino %}
+          <a href="/productos" class="btn btn-outline-secondary">Limpiar</a>
+        {% endif %}
+      </div>
+    </form>
+
+    {% if productos %}
+      <div class="table-container">
+        <table class="app-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th>Código</th>
+              <th>Precio</th>
+              <th>Existencia</th>
+              <th>Estado</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for producto in productos %}
+              <tr>
+                <td>
+                  <strong>{{ producto.nombre }}</strong>
+
+                  {% if producto.descripcion %}
+                    <small class="d-block text-muted">{{ producto.descripcion }}</small>
+                  {% endif %}
+                </td>
+
+                <td>{{ producto.nombre_categoria or 'Sin categoría' }}</td>
+
+                <td>
+                  {% if producto.codigo_barras %}
+                    <code>{{ producto.codigo_barras }}</code>
+                  {% else %}
+                    <span class="text-muted">Sin código</span>
+                  {% endif %}
+                </td>
+
+                <td>${{ '{:,.2f}'.format(producto.precio_venta) }}</td>
+
+                <td>
+                  {% if producto.stock_actual <= producto.stock_minimo %}
+                    <span class="status-badge status-badge--warning">{{ producto.stock_actual }} disponibles</span>
+                  {% else %}
+                    <span class="status-badge status-badge--success">{{ producto.stock_actual }} disponibles</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if producto.activo %}
+                    <span class="status-badge status-badge--success">Activo</span>
+                  {% else %}
+                    <span class="status-badge status-badge--danger">Inactivo</span>
+                  {% endif %}
+                </td>
+
+                <td class="text-end">
+                  <div class="d-inline-flex gap-2">
+                    <a href="/productos/{{ producto.id_producto }}/editar" class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                    <form action="/productos/{{ producto.id_producto }}/estado" method="POST">
+                      <button type="submit"
+                        class="btn btn-sm
+                                                {% if producto.activo %}
+                          
+                                                    btn-outline-danger
+
+                        {% else %}
+                          
+                                                    btn-outline-success
+
+                        {% endif %}
+                                            ">
+                        {% if producto.activo %}
+                          Desactivar
+                        {% else %}
+                          Activar
+                        {% endif %}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state__icon">📦</div>
+
+        {% if termino %}
+          <h3>No encontramos productos</h3>
+          <p>No hay resultados para “{{ termino }}”.</p>
+        {% else %}
+          <h3>No hay productos registrados</h3>
+          <p>Registra el primer producto para comenzar.</p>
+
+          <a href="/productos/nuevo" class="btn btn-pets mt-3">Registrar producto</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

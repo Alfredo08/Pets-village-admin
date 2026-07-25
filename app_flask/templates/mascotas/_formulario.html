@@ -1,0 +1,357 @@
+{% set datos = formulario or {} %}
+
+{% if datos %}
+    {% set nombre_actual = datos.get("nombre", "") %}
+    {% set especie_actual = datos.get("especie", "perro") %}
+    {% set raza_actual = datos.get("raza", "") %}
+    {% set tamano_actual = datos.get("tamano", "") %}
+    {% set tipo_pelo_actual = datos.get("tipo_pelo", "") %}
+    {% set sexo_actual = datos.get("sexo", "No especificado") %}
+    {% set fecha_actual = datos.get("fecha_nacimiento", "") %}
+    {% set peso_actual = datos.get("peso", "") %}
+    {% set color_actual = datos.get("color", "") %}
+    {% set esterilizado_actual = datos.get("esterilizado", "") %}
+    {% set alergias_actuales = datos.get("alergias", "") %}
+    {% set observaciones_actuales = datos.get("observaciones", "") %}
+    {% set notas_actuales = datos.get("notas_especiales", "") %}
+{% else %}
+    {% set nombre_actual = mascota.nombre if mascota else "" %}
+    {% set especie_actual = mascota.especie if mascota else "perro" %}
+    {% set raza_actual = mascota.raza if mascota else "" %}
+    {% set tamano_actual = mascota.tamano if mascota else "" %}
+    {% set tipo_pelo_actual = mascota.tipo_pelo if mascota else "" %}
+    {% set sexo_actual = mascota.sexo if mascota else "No especificado" %}
+    {% set fecha_actual = mascota.fecha_nacimiento if mascota else "" %}
+    {% set peso_actual = mascota.peso if mascota else "" %}
+    {% set color_actual = mascota.color if mascota else "" %}
+    {% set esterilizado_actual = mascota.esterilizado if mascota else "" %}
+    {% set alergias_actuales = mascota.alergias if mascota else "" %}
+    {% set observaciones_actuales = mascota.observaciones if mascota else "" %}
+    {% set notas_actuales = mascota.notas_especiales if mascota else "" %}
+{% endif %}
+
+<section class="panel">
+
+    <div class="row g-4">
+
+        <div class="col-12 col-lg-6">
+            <label for="nombre" class="form-label">
+                Nombre de la mascota *
+            </label>
+
+            <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                class="form-control"
+                value="{{ nombre_actual or '' }}"
+                maxlength="100"
+                required
+                autofocus
+            >
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <label for="especie" class="form-label">
+                Especie *
+            </label>
+
+            <select
+                id="especie"
+                name="especie"
+                class="form-select"
+                required
+            >
+                <option
+                    value="perro"
+                    {% if especie_actual == "perro" %}selected{% endif %}
+                >
+                    Perro
+                </option>
+
+                <option
+                    value="gato"
+                    {% if especie_actual == "gato" %}selected{% endif %}
+                >
+                    Gato
+                </option>
+
+                <option
+                    value="otro"
+                    {% if especie_actual == "otro" %}selected{% endif %}
+                >
+                    Otro
+                </option>
+            </select>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <label for="raza" class="form-label">
+                Raza
+            </label>
+
+            <input
+                type="text"
+                id="raza"
+                name="raza"
+                class="form-control"
+                value="{{ raza_actual or '' }}"
+                maxlength="100"
+            >
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label for="tamano" class="form-label">
+                Tamaño *
+            </label>
+
+            <select
+                id="tamano"
+                name="tamano"
+                class="form-select"
+                required
+            >
+                <option value="">Selecciona</option>
+
+                <option
+                    value="toy_chico"
+                    {% if tamano_actual == "toy_chico" %}selected{% endif %}
+                >
+                    Toy / Chico
+                </option>
+
+                <option
+                    value="mediano"
+                    {% if tamano_actual == "mediano" %}selected{% endif %}
+                >
+                    Mediano
+                </option>
+
+                <option
+                    value="grande"
+                    {% if tamano_actual == "grande" %}selected{% endif %}
+                >
+                    Grande
+                </option>
+
+                <option
+                    value="extra_grande"
+                    {% if tamano_actual == "extra_grande" %}selected{% endif %}
+                >
+                    Extra grande
+                </option>
+            </select>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label for="tipo_pelo" class="form-label">
+                Tipo de pelo *
+            </label>
+
+            <select
+                id="tipo_pelo"
+                name="tipo_pelo"
+                class="form-select"
+                required
+            >
+                <option value="">Selecciona</option>
+
+                <option
+                    value="corto"
+                    {% if tipo_pelo_actual == "corto" %}selected{% endif %}
+                >
+                    Pelo corto
+                </option>
+
+                <option
+                    value="largo"
+                    {% if tipo_pelo_actual == "largo" %}selected{% endif %}
+                >
+                    Pelo largo
+                </option>
+            </select>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <label for="sexo" class="form-label">
+                Sexo *
+            </label>
+
+            <select
+                id="sexo"
+                name="sexo"
+                class="form-select"
+                required
+            >
+                <option
+                    value="No especificado"
+                    {% if sexo_actual == "No especificado" %}selected{% endif %}
+                >
+                    No especificado
+                </option>
+
+                <option
+                    value="Macho"
+                    {% if sexo_actual == "Macho" %}selected{% endif %}
+                >
+                    Macho
+                </option>
+
+                <option
+                    value="Hembra"
+                    {% if sexo_actual == "Hembra" %}selected{% endif %}
+                >
+                    Hembra
+                </option>
+            </select>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <label for="fecha_nacimiento" class="form-label">
+                Fecha de nacimiento
+            </label>
+
+            <input
+                type="date"
+                id="fecha_nacimiento"
+                name="fecha_nacimiento"
+                class="form-control"
+                value="{{ fecha_actual or '' }}"
+            >
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-2">
+            <label for="peso" class="form-label">
+                Peso (kg)
+            </label>
+
+            <input
+                type="number"
+                id="peso"
+                name="peso"
+                class="form-control"
+                value="{{ peso_actual or '' }}"
+                min="0.01"
+                max="200"
+                step="0.01"
+            >
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-2">
+            <label for="color" class="form-label">
+                Color
+            </label>
+
+            <input
+                type="text"
+                id="color"
+                name="color"
+                class="form-control"
+                value="{{ color_actual or '' }}"
+                maxlength="80"
+            >
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-2">
+            <label for="esterilizado" class="form-label">
+                Esterilizado
+            </label>
+
+            <select
+                id="esterilizado"
+                name="esterilizado"
+                class="form-select"
+            >
+                <option
+                    value=""
+                    {% if esterilizado_actual == "" or
+                        esterilizado_actual is none %}
+                        selected
+                    {% endif %}
+                >
+                    No especificado
+                </option>
+
+                <option
+                    value="1"
+                    {% if esterilizado_actual|string == "1" %}
+                        selected
+                    {% endif %}
+                >
+                    Sí
+                </option>
+
+                <option
+                    value="0"
+                    {% if esterilizado_actual|string == "0" %}
+                        selected
+                    {% endif %}
+                >
+                    No
+                </option>
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label for="alergias" class="form-label">
+                Alergias
+            </label>
+
+            <textarea
+                id="alergias"
+                name="alergias"
+                class="form-control"
+                rows="3"
+                placeholder="Productos o sustancias que deben evitarse"
+            >{{ alergias_actuales or "" }}</textarea>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <label for="observaciones" class="form-label">
+                Observaciones
+            </label>
+
+            <textarea
+                id="observaciones"
+                name="observaciones"
+                class="form-control"
+                rows="4"
+                placeholder="Información general sobre la mascota"
+            >{{ observaciones_actuales or "" }}</textarea>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <label for="notas_especiales" class="form-label">
+                Notas especiales
+            </label>
+
+            <textarea
+                id="notas_especiales"
+                name="notas_especiales"
+                class="form-control"
+                rows="4"
+                placeholder="Indicaciones para el manejo durante el servicio"
+            >{{ notas_actuales or "" }}</textarea>
+        </div>
+
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-end gap-2">
+        <a
+            href="{{ url_cancelar }}"
+            class="btn btn-outline-secondary"
+        >
+            Cancelar
+        </a>
+
+        <button
+            type="submit"
+            class="btn btn-pets"
+        >
+            {{ texto_boton }}
+        </button>
+    </div>
+
+</section>

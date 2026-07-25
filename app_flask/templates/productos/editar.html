@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+Editar producto | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">Productos</p>
+        <h1 class="page-title">Editar producto</h1>
+        <p class="page-description">
+            Actualiza la información de {{ producto.nombre }}.
+        </p>
+    </div>
+
+    <a href="/productos" class="btn btn-outline-secondary">
+        Volver
+    </a>
+</div>
+
+<form
+    action="/productos/{{ producto.id_producto }}/actualizar"
+    method="POST"
+>
+
+    <section class="panel">
+        <div class="row g-4">
+
+            <div class="col-12 col-lg-8">
+                <label for="nombre" class="form-label">
+                    Nombre del producto *
+                </label>
+
+                <input
+                    type="text"
+                    id="nombre"
+                    name="nombre"
+                    class="form-control"
+                    value="{{ producto.nombre }}"
+                    maxlength="150"
+                    required
+                    autofocus
+                >
+            </div>
+
+            <div class="col-12 col-lg-4">
+                <label for="id_categoria" class="form-label">
+                    Categoría
+                </label>
+
+                <select
+                    id="id_categoria"
+                    name="id_categoria"
+                    class="form-select"
+                >
+                    <option value="">Sin categoría</option>
+
+                    {% for categoria in categorias %}
+                        <option
+                            value="{{ categoria.id_categoria }}"
+                            {% if producto.id_categoria
+                                == categoria.id_categoria %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ categoria.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label for="descripcion" class="form-label">
+                    Descripción
+                </label>
+
+                <textarea
+                    id="descripcion"
+                    name="descripcion"
+                    class="form-control"
+                    rows="3"
+                >{{ producto.descripcion or "" }}</textarea>
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-2">
+                <label for="precio_compra" class="form-label">
+                    Precio de compra *
+                </label>
+
+                <input
+                    type="number"
+                    id="precio_compra"
+                    name="precio_compra"
+                    class="form-control"
+                    value="{{ producto.precio_compra }}"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-2">
+                <label for="precio_venta" class="form-label">
+                    Precio de venta *
+                </label>
+
+                <input
+                    type="number"
+                    id="precio_venta"
+                    name="precio_venta"
+                    class="form-control"
+                    value="{{ producto.precio_venta }}"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-2">
+                <label for="stock_minimo" class="form-label">
+                    Stock mínimo *
+                </label>
+
+                <input
+                    type="number"
+                    id="stock_minimo"
+                    name="stock_minimo"
+                    class="form-control"
+                    value="{{ producto.stock_minimo }}"
+                    min="0"
+                    step="1"
+                    required
+                >
+            </div>
+            
+            <div class="col-12 col-lg-6">
+                <label for="codigo_barras" class="form-label">
+                    Código de barras
+                </label>
+
+                <input
+                    type="text"
+                    id="codigo_barras"
+                    name="codigo_barras"
+                    class="form-control"
+                    value="{{ producto.codigo_barras or '' }}"
+                    maxlength="80"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="col-12">
+                <div class="alert alert-light border mb-0">
+                    <strong>Existencia actual:</strong>
+                    {{ producto.stock_actual }}
+
+                    <br>
+
+                    <small class="text-muted">
+                        El stock se modificará mediante entradas, salidas y
+                        ajustes en el módulo de inventario.
+                    </small>
+                </div>
+            </div>
+
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-end gap-2">
+            <a href="/productos" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+
+            <button type="submit" class="btn btn-pets">
+                Guardar cambios
+            </button>
+        </div>
+    </section>
+
+</form>
+
+{% endblock %}

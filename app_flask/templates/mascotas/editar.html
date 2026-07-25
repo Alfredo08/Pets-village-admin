@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Editar mascota | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">{{ mascota.numero_expediente or 'Mascota' }}</p>
+
+      <h1 class="page-title">Editar {{ mascota.nombre }}</h1>
+
+      <p class="page-description">Propietario: {{ cliente.nombre }}.</p>
+    </div>
+
+    <a href="/clientes/{{ cliente.id_cliente }}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <form action="/mascotas/{{ mascota.id_mascota }}/actualizar" method="POST">
+    {% set texto_boton = 'Guardar cambios' %}
+    {% set url_cancelar = '/clientes/' ~ cliente.id_cliente %}
+
+    {% include 'mascotas/_formulario.html' %}
+  </form>
+{% endblock %}

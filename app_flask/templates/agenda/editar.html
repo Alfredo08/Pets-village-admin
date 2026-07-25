@@ -1,0 +1,26 @@
+{% set texto_boton = "Guardar cambios" %}
+{% set url_cancelar = "/agenda/orden/" ~ orden.id_orden %}
+
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Editar Orden
+{% endblock %}
+
+{% block contenido %}
+  {% set datos = formulario %}
+
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Agenda</p>
+
+      <h1>Editar Orden</h1>
+
+      <p>{{ orden.folio }}</p>
+    </div>
+  </div>
+
+  <form action="/agenda/orden/{{ orden.id_orden }}/actualizar" method="POST">
+    {% include 'agenda/_formulario.html' %}
+  </form>
+{% endblock %}

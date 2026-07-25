@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Servicios | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Catálogo</p>
+      <h1 class="page-title">Servicios</h1>
+
+      <p class="page-description">Administra paquetes, complementos y servicios adicionales.</p>
+    </div>
+
+    <a href="/servicios/nuevo" class="btn btn-pets">+ Nuevo servicio</a>
+  </div>
+
+  <section class="panel">
+    <form action="/servicios" method="GET" class="row g-3 mb-4">
+      <div class="col-12 col-md-8 col-xl-5">
+        <label for="buscar" class="form-label">Buscar servicio</label>
+
+        <input type="search" id="buscar" name="buscar" class="form-control" value="{{ termino }}" placeholder="Nombre, descripción o tipo" />
+      </div>
+
+      <div class="col-12 col-md-auto d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-pets">Buscar</button>
+
+        {% if termino %}
+          <a href="/servicios" class="btn btn-outline-secondary">Limpiar</a>
+        {% endif %}
+      </div>
+    </form>
+
+    {% if servicios %}
+      <div class="table-container">
+        <table class="app-table">
+          <thead>
+            <tr>
+              <th>Servicio</th>
+              <th>Tipo</th>
+              <th>Tarifas</th>
+              <th>Precio</th>
+              <th>Estado</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for servicio in servicios %}
+              <tr>
+                <td>
+                  <strong>{{ servicio.nombre }}</strong>
+
+                  {% if servicio.descripcion %}
+                    <small class="d-block text-muted">{{ servicio.descripcion }}</small>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if servicio.tipo == 'paquete' %}
+                    Paquete
+                  {% elif servicio.tipo == 'complemento' %}
+                    Complemento
+                  {% else %}
+                    Adicional
+                  {% endif %}
+                </td>
+
+                <td>{{ servicio.total_tarifas }}</td>
+                <td>
+                  {% if servicio.precio_minimo == null %}
+                    <span class="text-muted">Sin tarifas</span>
+                  {% elif servicio.precio_minimo == servicio.precio_maximo %}
+                    ${{ '{:,.2f}'.format(servicio.precio_minimo) }}
+                  {% else %}
+                    ${{ '{:,.2f}'.format(servicio.precio_minimo) }}
+                    – ${{ '{:,.2f}'.format(servicio.precio_maximo) }}
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if servicio.activo %}
+                    <span class="status-badge status-badge--success">Activo</span>
+                  {% else %}
+                    <span class="status-badge status-badge--danger">Inactivo</span>
+                  {% endif %}
+                </td>
+
+                <td class="text-end">
+                  <div class="d-inline-flex gap-2">
+                    <a href="/servicios/{{ servicio.id_servicio }}/editar" class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                    <form action="/servicios/{{ servicio.id_servicio }}/estado" method="POST">
+                      <button type="submit"
+                        class="btn btn-sm
+                                                {% if servicio.activo %}
+                          
+                          
+                          
+                                                    btn-outline-danger
+
+
+
+                        {% else %}
+                          
+                          
+                          
+                                                    btn-outline-success
+
+
+
+                        {% endif %}
+                                            ">
+                        {% if servicio.activo %}
+                          Desactivar
+                        {% else %}
+                          Activar
+                        {% endif %}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state__icon">✂️</div>
+
+        <h3>No hay servicios registrados</h3>
+
+        <p>Registra paquetes, complementos y servicios adicionales.</p>
+
+        <a href="/servicios/nuevo" class="btn btn-pets mt-3">Registrar servicio</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

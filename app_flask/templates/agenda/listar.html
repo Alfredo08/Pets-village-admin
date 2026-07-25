@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+Agenda
+{% endblock %}
+
+{% block contenido %}
+
+<div class="page-header">
+
+    <div>
+
+        <p class="page-eyebrow">
+            Operación diaria
+        </p>
+
+        <h1 class="page-title">
+            Agenda
+        </h1>
+
+        <p class="page-description">
+            Órdenes de servicio programadas.
+        </p>
+
+    </div>
+
+    <div class="d-flex flex-wrap gap-3 align-items-end">
+
+        <form
+            action="/agenda"
+            method="GET"
+        >
+
+            <label
+                for="fecha"
+                class="form-label"
+            >
+                Fecha
+            </label>
+
+            <input
+                type="date"
+                id="fecha"
+                name="fecha"
+                class="form-control"
+                value="{{ fecha_seleccionada }}"
+                onchange="this.form.submit()"
+            >
+
+        </form>
+
+        <a
+            href="/agenda/nueva?fecha={{ fecha_seleccionada }}"
+            class="btn btn-pets"
+        >
+            + Nueva Orden
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="scheduler">
+
+    <!-- =========================
+         CABECERA
+    ========================== -->
+
+    <div class="scheduler__header">
+
+        <div class="scheduler__time">
+
+            Hora
+
+        </div>
+
+        {% for estilista in estilistas %}
+
+            <div
+                class="scheduler__employee"
+                {% if estilista.color_agenda %}
+                    style="
+                        border-top:4px solid
+                        {{ estilista.color_agenda }};
+                    "
+                {% endif %}
+            >
+
+                {{ estilista.nombre }}
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- =========================
+         HORARIOS
+    ========================== -->
+
+    {% for hora in horarios %}
+
+        <div class="scheduler__row">
+
+            <div class="scheduler__time">
+
+                {{ hora }}
+
+            </div>
+
+            {% for estilista in estilistas %}
+
+                {% set llave = hora ~ "_" ~ estilista.id_usuario %}
+                {% set ordenes = agenda.get(llave, []) %}
+
+                <div
+                    class="scheduler__cell"
+                    data-hora="{{ hora }}"
+                    data-estilista="{{ estilista.id_usuario }}"
+                >
+
+                    {% for orden in ordenes %}
+
+                        <a
+                            href="/agenda/orden/{{ orden.id_orden }}"
+                            class="
+                                order-card
+                                order-card--{{ orden.estado }}
+                            "
+                        >
+
+                            <strong>
+
+                                {{ orden.nombre_mascota }}
+
+                            </strong>
+
+                            <small>
+
+                                {{ orden.nombre_cliente }}
+
+                            </small>
+
+                            <small>
+
+                                {{ orden.nombre_servicio }}
+
+                            </small>
+
+                            <span
+                                class="order-card__status"
+                            >
+
+                                {% if orden.estado=="pendiente" %}
+
+                                    Pendiente
+
+                                {% elif orden.estado=="confirmada" %}
+
+                                    Confirmada
+
+                                {% elif orden.estado=="en_proceso" %}
+
+                                    En proceso
+
+                                {% elif orden.estado=="finalizada" %}
+
+                                    Finalizada
+
+                                {% else %}
+
+                                    {{ orden.estado }}
+
+                                {% endif %}
+
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  {{ cliente.nombre }} | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Cliente</p>
+      <h1 class="page-title">{{ cliente.nombre }}</h1>
+
+      <p class="page-description">Información del propietario y sus mascotas.</p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/clientes" class="btn btn-outline-secondary">Volver</a>
+      <a href="/clientes/{{ cliente.id_cliente }}/editar" class="btn btn-outline-secondary">Editar cliente</a>
+      <a href="/mascotas?buscar={{ cliente.nombre|urlencode }}" class="btn btn-outline-secondary">Ver expedientes</a>
+      <a href="/clientes/{{ cliente.id_cliente }}/mascotas/nueva" class="btn btn-pets">+ Nueva mascota</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-4">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Datos del cliente</h2>
+
+            <p class="panel-description">Información de contacto.</p>
+          </div>
+        </div>
+
+        <div class="detail-list">
+          <div class="detail-item">
+            <span class="detail-item__label">Teléfono</span>
+
+            <strong>{{ cliente.telefono or 'No registrado' }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-item__label">Correo electrónico</span>
+
+            <strong>{{ cliente.correo or 'No registrado' }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-item__label">Estado</span>
+
+            {% if cliente.activo %}
+              <span class="status-badge status-badge--success">Activo</span>
+            {% else %}
+              <span class="status-badge status-badge--danger">Inactivo</span>
+            {% endif %}
+          </div>
+
+          {% if cliente.observaciones %}
+            <div class="detail-item">
+              <span class="detail-item__label">Observaciones</span>
+
+              <p class="mb-0">{{ cliente.observaciones }}</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-8">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Mascotas</h2>
+
+            <p class="panel-description">Mascotas asociadas a este cliente.</p>
+          </div>
+
+          <a href="/clientes/{{ cliente.id_cliente }}/mascotas/nueva" class="btn btn-sm btn-pets">+ Nueva mascota</a>
+        </div>
+
+        {% if mascotas %}
+          <div class="pet-list">
+            {% for mascota in mascotas %}
+              <article class="pet-card">
+                <div class="pet-card__avatar">
+                  {% if mascota.especie == 'gato' %}
+                    🐱
+                  {% else %}
+                    🐶
+                  {% endif %}
+                </div>
+
+                <div class="pet-card__content">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h3 class="mb-0">{{ mascota.nombre }}</h3>
+
+                    {% if mascota.activo %}
+                      <span class="status-badge status-badge--success">Activa</span>
+                    {% else %}
+                      <span class="status-badge status-badge--danger">Inactiva</span>
+                    {% endif %}
+                  </div>
+
+                  <p class="mt-2 mb-1">{{ mascota.raza or 'Sin raza registrada' }}</p>
+
+                  <div class="pet-card__meta">
+                    <span>
+                      {% if mascota.tamano == 'toy_chico' %}
+                        Toy / Chico
+                      {% elif mascota.tamano == 'mediano' %}
+                        Mediano
+                      {% elif mascota.tamano == 'grande' %}
+                        Grande
+                      {% elif mascota.tamano == 'extra_grande' %}
+                        Extra grande
+                      {% endif %}
+                    </span>
+
+                    <span>
+                      {% if mascota.tipo_pelo == 'corto' %}
+                        Pelo corto
+                      {% elif mascota.tipo_pelo == 'largo' %}
+                        Pelo largo
+                      {% endif %}
+                    </span>
+
+                    {% if mascota.numero_expediente %}
+                      <span>{{ mascota.numero_expediente }}</span>
+                    {% endif %}
+                  </div>
+
+                  {% if mascota.alergias %}
+                    <div class="alert alert-warning py-2 px-3 mt-3 mb-0">
+                      <strong>Alergias:</strong>
+                      {{ mascota.alergias }}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="pet-card__actions">
+                  <a href="/mascotas/{{ mascota.id_mascota }}" class="btn btn-outline-secondary">Expediente</a>
+
+                  <a href="/mascotas/{{ mascota.id_mascota }}/editar" class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                  <form action="/mascotas/{{ mascota.id_mascota }}/estado" method="POST" class="d-inline">
+                    <button type="submit"
+                      class="btn btn-sm
+                {% if mascota.activo %}
+                        
+                        
+                    btn-outline-danger
+
+
+                      {% else %}
+                        
+                        
+                    btn-outline-success
+
+
+                      {% endif %}
+            ">
+                      {% if mascota.activo %}
+                        Desactivar
+                      {% else %}
+                        Activar
+                      {% endif %}
+                    </button>
+                  </form>
+
+                  {% if mascota.activo %}
+                    <a href="/ventas/nueva?cliente={{ cliente.id_cliente }}&mascota={{ mascota.id_mascota }}" class="btn btn-sm btn-pets">Nueva venta</a>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-state__icon">🐾</div>
+
+            <h3>Este cliente no tiene mascotas</h3>
+
+            <p>Registra una mascota para utilizar servicios y ventas.</p>
+
+            <a href="/clientes/{{ cliente.id_cliente }}/mascotas/nueva" class="btn btn-pets mt-3">Registrar mascota</a>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+{% endblock %}

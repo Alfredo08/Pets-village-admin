@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Dashboard | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Resumen general</p>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-description">Bienvenido, {{ session.nombre }}. Este es el resumen de PetsVillage.</p>
+    </div>
+
+    <a href="/ventas" class="btn btn-pets">Nueva venta</a>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-md-6 col-xl-3">
+      <article class="stat-card">
+        <div class="stat-card__header">
+          <span class="stat-card__icon">📅</span>
+        </div>
+
+        <p class="stat-card__label">Citas de hoy</p>
+        <p class="stat-card__value">0</p>
+        <small class="stat-card__help">Servicios programados</small>
+      </article>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <article class="stat-card">
+        <div class="stat-card__header">
+          <span class="stat-card__icon">💰</span>
+        </div>
+
+        <p class="stat-card__label">Ventas de hoy</p>
+        <p class="stat-card__value">$0.00</p>
+        <small class="stat-card__help">Ingresos registrados</small>
+      </article>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <article class="stat-card">
+        <div class="stat-card__header">
+          <span class="stat-card__icon">🐾</span>
+        </div>
+
+        <p class="stat-card__label">Mascotas atendidas</p>
+        <p class="stat-card__value">0</p>
+        <small class="stat-card__help">Atenciones del día</small>
+      </article>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <article class="stat-card">
+        <div class="stat-card__header">
+          <span class="stat-card__icon">📦</span>
+        </div>
+
+        <p class="stat-card__label">Stock bajo</p>
+        <p class="stat-card__value">0</p>
+        <small class="stat-card__help">Productos por revisar</small>
+      </article>
+    </div>
+  </div>
+
+  <div class="row g-4 mt-1">
+    <div class="col-12 col-xl-8">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Próximas citas</h2>
+            <p class="panel-description">Servicios programados para hoy.</p>
+          </div>
+
+          <a href="/agenda" class="panel-link">Ver agenda</a>
+        </div>
+
+        <div class="empty-state">
+          <div class="empty-state__icon">📅</div>
+          <h3>No hay citas registradas</h3>
+          <p>Las próximas citas aparecerán en esta sección.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Accesos rápidos</h2>
+            <p class="panel-description">Operaciones frecuentes.</p>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <a href="/ventas" class="quick-action">
+            <span>🛒</span>
+            <div>
+              <strong>Nueva venta</strong>
+              <small>Productos y servicios</small>
+            </div>
+          </a>
+
+          <a href="/clientes" class="quick-action">
+            <span>👤</span>
+            <div>
+              <strong>Nuevo cliente</strong>
+              <small>Registrar propietario</small>
+            </div>
+          </a>
+
+          <a href="/productos" class="quick-action">
+            <span>📦</span>
+            <div>
+              <strong>Agregar producto</strong>
+              <small>Registrar inventario</small>
+            </div>
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

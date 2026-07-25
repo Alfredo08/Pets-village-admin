@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Editar servicio | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Servicios</p>
+      <h1 class="page-title">Editar servicio</h1>
+
+      <p class="page-description">Actualiza {{ servicio.nombre }} y sus tarifas.</p>
+    </div>
+
+    <a href="/servicios" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <form action="/servicios/{{ servicio.id_servicio }}/actualizar" method="POST">
+    {% set texto_boton = 'Guardar cambios' %}
+
+    {% include 'servicios/_formulario.html' %}
+  </form>
+{% endblock %}

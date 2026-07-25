@@ -1,0 +1,104 @@
+{% set datos = formulario or {} %}
+
+{% if datos %}
+    {% set nombre_actual = datos.get("nombre", "") %}
+    {% set telefono_actual = datos.get("telefono", "") %}
+    {% set correo_actual = datos.get("correo", "") %}
+    {% set observaciones_actuales = datos.get("observaciones", "") %}
+{% else %}
+    {% set nombre_actual = cliente.nombre if cliente else "" %}
+    {% set telefono_actual = cliente.telefono if cliente else "" %}
+    {% set correo_actual = cliente.correo if cliente else "" %}
+    {% set observaciones_actuales = cliente.observaciones if cliente else "" %}
+{% endif %}
+
+<section class="panel">
+
+    <div class="row g-4">
+
+        <div class="col-12 col-lg-6">
+            <label for="nombre" class="form-label">
+                Nombre completo *
+            </label>
+
+            <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                class="form-control"
+                value="{{ nombre_actual or '' }}"
+                maxlength="150"
+                required
+                autofocus
+            >
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <label for="telefono" class="form-label">
+                Teléfono
+            </label>
+
+            <input
+                type="tel"
+                id="telefono"
+                name="telefono"
+                class="form-control"
+                value="{{ telefono_actual or '' }}"
+                maxlength="30"
+                placeholder="664 123 4567"
+            >
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+            <label for="correo" class="form-label">
+                Correo electrónico
+            </label>
+
+            <input
+                type="email"
+                id="correo"
+                name="correo"
+                class="form-control"
+                value="{{ correo_actual or '' }}"
+                maxlength="150"
+                placeholder="cliente@correo.com"
+            >
+        </div>
+
+        <div class="col-12">
+            <label for="observaciones" class="form-label">
+                Observaciones
+            </label>
+
+            <textarea
+                id="observaciones"
+                name="observaciones"
+                class="form-control"
+                rows="4"
+                placeholder="Indicaciones generales sobre el cliente"
+            >{{ observaciones_actuales or "" }}</textarea>
+        </div>
+
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-end gap-2">
+
+        <a
+            href="{{ url_cancelar }}"
+            class="btn btn-outline-secondary"
+        >
+            Cancelar
+        </a>
+
+        <button
+            type="submit"
+            class="btn btn-pets"
+        >
+            {{ texto_boton }}
+        </button>
+
+    </div>
+
+</section>

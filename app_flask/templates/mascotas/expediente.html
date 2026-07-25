@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+{% from 'componentes/macros.html' import info_card, empty_state %}
+{% block titulo %}
+  Expediente {{ mascota.numero_expediente or mascota.nombre }} | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="record-page">
+    <div class="record-topbar">
+      <div>
+        <a href="/mascotas" class="record-back-link">← Volver a mascotas</a>
+
+        <p class="page-eyebrow mt-3">Expediente</p>
+
+        <h1 class="page-title">{{ mascota.numero_expediente or 'Sin número de expediente' }}</h1>
+      </div>
+
+      <div class="record-actions">
+        <a href="/clientes/{{ cliente.id_cliente }}" class="btn btn-outline-secondary">Ver cliente</a>
+
+        <a href="/mascotas/{{ mascota.id_mascota }}/editar" class="btn btn-outline-secondary">Editar</a>
+
+        {% if mascota.activo %}
+          <a href="/ventas/nueva?cliente={{ cliente.id_cliente }}&mascota={{ mascota.id_mascota }}" class="btn btn-pets">Nueva venta</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <section class="record-hero">
+      <div class="record-hero__avatar">
+        {% if mascota.foto %}
+          <img src="{{ url_for('static', filename='uploads/mascotas/' ~ mascota.foto) }}" alt="Fotografía de {{ mascota.nombre }}" />
+        {% elif mascota.especie == 'gato' %}
+          <span>🐱</span>
+        {% else %}
+          <span>🐶</span>
+        {% endif %}
+      </div>
+
+      <div class="record-hero__content">
+        <div class="record-hero__heading">
+          <div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <h2 class="record-hero__name">{{ mascota.nombre }}</h2>
+
+              {% if mascota.activo %}
+                <span class="status-badge status-badge--success">Activa</span>
+              {% else %}
+                <span class="status-badge status-badge--danger">Inactiva</span>
+              {% endif %}
+            </div>
+
+            <p class="record-hero__breed">{{ mascota.raza or 'Raza no registrada' }}</p>
+          </div>
+        </div>
+
+        <div class="record-hero__meta">
+          <span>
+            {% if mascota.tamano == 'toy_chico' %}
+              Toy / Chico
+            {% elif mascota.tamano == 'mediano' %}
+              Mediano
+            {% elif mascota.tamano == 'grande' %}
+              Grande
+            {% elif mascota.tamano == 'extra_grande' %}
+              Extra grande
+            {% else %}
+              Tamaño no registrado
+            {% endif %}
+          </span>
+
+          <span>
+            {% if mascota.tipo_pelo == 'corto' %}
+              Pelo corto
+            {% elif mascota.tipo_pelo == 'largo' %}
+              Pelo largo
+            {% else %}
+              Tipo de pelo no registrado
+            {% endif %}
+          </span>
+
+          <span>{{ mascota.sexo or 'Sexo no registrado' }}</span>
+        </div>
+
+        <div class="record-owner">
+          <span class="record-owner__label">Propietario</span>
+
+          <a href="/clientes/{{ cliente.id_cliente }}" class="record-owner__name">{{ cliente.nombre }}</a>
+
+          <span class="record-owner__contact">{{ cliente.telefono or 'Sin teléfono registrado' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="record-stats">
+      <article class="record-stat">
+        <span class="record-stat__label">Servicios</span>
+
+        <strong class="record-stat__value">{{ resumen.servicios }}</strong>
+
+        <small>Atenciones registradas</small>
+      </article>
+
+      <article class="record-stat">
+        <span class="record-stat__label">Compras</span>
+
+        <strong class="record-stat__value">{{ resumen.compras }}</strong>
+
+        <small>Productos adquiridos</small>
+      </article>
+
+      <article class="record-stat">
+        <span class="record-stat__label">Citas</span>
+
+        <strong class="record-stat__value">{{ resumen.citas }}</strong>
+
+        <small>Citas programadas</small>
+      </article>
+
+      <article class="record-stat">
+        <span class="record-stat__label">Total gastado</span>
+
+        <strong class="record-stat__value">${{ '{:,.2f}'.format(resumen.total_gastado) }}</strong>
+
+        <small>Acumulado histórico</small>
+      </article>
+    </section>
+
+    <section class="record-tabs-container">
+      <nav class="record-tabs" aria-label="Secciones del expediente">
+        <button type="button" class="record-tab active" data-tab="general">General</button>
+
+        <button type="button" class="record-tab" data-tab="historial">Historial</button>
+
+        <button type="button" class="record-tab" data-tab="compras">Compras</button>
+
+        <button type="button" class="record-tab" data-tab="citas">Citas</button>
+        <button type="button" class="record-tab" data-tab="archivos">Archivos</button>
+      </nav>
+
+      <div class="record-tab-content">
+        <section id="tab-general" class="record-tab-panel active">
+          <div class="record-general-grid">
+            {% call info_card('Información general') %}
+
+            <div class="record-info-grid">
+              <div class="record-info">
+                <span class="record-info__label">Expediente</span>
+
+                <strong>{{ mascota.numero_expediente or '-' }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Nombre</span>
+
+                <strong>{{ mascota.nombre }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Especie</span>
+
+                <strong>{{ mascota.especie|capitalize }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Raza</span>
+
+                <strong>{{ mascota.raza or 'No registrada' }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Sexo</span>
+
+                <strong>{{ mascota.sexo }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Tamaño</span>
+
+                <strong>{{ mascota.tamano.replace('_', ' ')|title }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Tipo de pelo</span>
+
+                <strong>{{ mascota.tipo_pelo|capitalize }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Peso</span>
+
+                <strong>
+                  {% if mascota.peso %}
+                    {{ mascota.peso }} kg
+                  {% else %}
+                    No registrado
+                  {% endif %}
+                </strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Color</span>
+
+                <strong>{{ mascota.color or 'No registrado' }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Fecha nacimiento</span>
+
+                <strong>{{ mascota.fecha_nacimiento or 'No registrada' }}</strong>
+              </div>
+
+              <div class="record-info">
+                <span class="record-info__label">Esterilizado</span>
+
+                <strong>
+                  {% if mascota.esterilizado == 1 %}
+                    Sí
+                  {% elif mascota.esterilizado == 0 %}
+                    No
+                  {% else %}
+                    No especificado
+                  {% endif %}
+                </strong>
+              </div>
+            </div>
+
+            {% endcall %}
+
+            {% call info_card('Alergias') %}
+
+            <p class="record-text">{{ mascota.alergias or 'Ninguna alergia registrada.' }}</p>
+
+            {% endcall %}
+
+            {% call info_card('Observaciones') %}
+
+            <p class="record-text">{{ mascota.observaciones or 'Sin observaciones.' }}</p>
+
+            {% endcall %}
+
+            {% call info_card('Notas especiales') %}
+
+            <p class="record-text">{{ mascota.notas_especiales or 'Sin notas especiales.' }}</p>
+
+            {% endcall %}
+          </div>
+        </section>
+
+        <section id="tab-historial" class="record-tab-panel">
+          {% call info_card('Historial de servicios') %}
+          {% if historial %}
+            {% for venta in historial %}
+              <article class="timeline-card">
+                <div class="timeline-card__content">
+                  <h5>{{ venta.descripcion }}</h5>
+
+                  <p>{{ venta.estilista }}
+
+                    ·
+
+                    {{ venta.fecha_creacion.strftime('%d/%m/%Y') }}</p>
+                </div>
+
+                <div class="timeline-card__actions">
+                  <strong>${{ '{:,.2f}'.format(venta.total) }}</strong>
+
+                  <a href="/ventas/{{ venta.id_venta }}" class="btn btn-sm btn-outline-secondary">Ver venta</a>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <div class="empty-state__icon">🛁</div>
+
+              <h3>Aún no existen servicios registrados</h3>
+            </div>
+          {% endif %}
+
+          {% endcall %}
+        </section>
+
+        <section id="tab-compras" class="record-tab-panel">
+          {% call info_card('Compras') %}
+
+          {% if compras %}
+            {% for compra in compras %}
+              <article class="timeline-card">
+                <div class="timeline-card__content">
+                  <h5>{{ compra.descripcion }}</h5>
+
+                  <p>{{ compra.fecha_creacion.strftime('%d/%m/%Y') }}</p>
+                </div>
+
+                <div class="timeline-card__actions">
+                  <strong>
+                    {{ compra.cantidad }}
+
+                    ×
+
+                    ${{ '{:,.2f}'.format(compra.precio_unitario) }}
+                  </strong>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <div class="empty-state__icon">🛍️</div>
+
+              <h3>No existen productos comprados</h3>
+            </div>
+          {% endif %}
+          {% endcall %}
+        </section>
+        <section
+            id="tab-citas"
+            class="record-tab-panel"
+        >
+
+            {% call info_card("Citas y órdenes de servicio") %}
+
+                {% if citas %}
+
+                    <div class="pet-appointment-list">
+
+                        {% for cita in citas %}
+
+                            <article class="pet-appointment-item">
+
+                                <div
+                                    class="pet-appointment-item__date"
+                                    {% if cita.color_agenda %}
+                                        style="
+                                            border-color:
+                                            {{ cita.color_agenda }};
+                                        "
+                                    {% endif %}
+                                >
+
+                                    <span>
+                                        {{ cita.fecha.strftime("%d") }}
+                                    </span>
+
+                                    <small>
+                                        {{ cita.fecha.strftime("%m/%Y") }}
+                                    </small>
+
+                                </div>
+
+                                <div class="pet-appointment-item__content">
+
+                                    <div class="pet-appointment-item__heading">
+
+                                        <div>
+                                            <h4>
+                                                {{ cita.nombre_servicio }}
+                                            </h4>
+
+                                            <p>
+                                                {{ cita.nombre_estilista }}
+                                                ·
+                                                {{ cita.duracion_minutos }}
+                                                minutos
+                                            </p>
+                                        </div>
+
+                                        {% if cita.estado == "pendiente" %}
+
+                                            <span class="status-badge status-badge--warning">
+                                                Pendiente
+                                            </span>
+
+                                        {% elif cita.estado == "confirmada" %}
+
+                                            <span class="status-badge status-badge--success">
+                                                Confirmada
+                                            </span>
+
+                                        {% elif cita.estado == "en_proceso" %}
+
+                                            <span class="status-badge status-badge--info">
+                                                En proceso
+                                            </span>
+
+                                        {% elif cita.estado == "finalizada" %}
+
+                                            <span class="status-badge status-badge--success">
+                                                Finalizada
+                                            </span>
+
+                                        {% elif cita.estado == "cancelada" %}
+
+                                            <span class="status-badge status-badge--danger">
+                                                Cancelada
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="status-badge status-badge--danger">
+                                                No asistió
+                                            </span>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                    <div class="pet-appointment-item__meta">
+
+                                        <strong>
+                                            {% if
+                                                cita.hora_inicio.total_seconds
+                                                is defined
+                                            %}
+                                                {% set segundos =
+                                                    cita.hora_inicio
+                                                    .total_seconds()|int
+                                                %}
+
+                                                {% set horas =
+                                                    segundos // 3600
+                                                %}
+
+                                                {% set minutos =
+                                                    (segundos % 3600) // 60
+                                                %}
+
+                                                {{
+                                                    "%02d:%02d"|format(
+                                                        horas,
+                                                        minutos
+                                                    )
+                                                }}
+                                            {% else %}
+                                                {{ cita.hora_inicio }}
+                                            {% endif %}
+                                        </strong>
+
+                                        <span>
+                                            {{ cita.folio }}
+                                        </span>
+
+                                    </div>
+
+                                    {% if cita.notas %}
+
+                                        <p class="pet-appointment-item__notes">
+                                            {{ cita.notas }}
+                                        </p>
+
+                                    {% endif %}
+
+                                    <div class="d-flex flex-wrap gap-2">
+
+                                        <a
+                                            href="/agenda/orden/{{ cita.id_orden }}"
+                                            class="btn btn-sm btn-outline-secondary"
+                                        >
+                                            Ver orden
+                                        </a>
+
+                                        {% if cita.id_venta %}
+
+                                            <a
+                                                href="/ventas/{{ cita.id_venta }}"
+                                                class="btn btn-sm btn-outline-primary"
+                                            >
+                                                Ver venta
+                                            </a>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </article>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    {{ empty_state(
+                        "📅",
+                        "No existen citas registradas",
+                        "Las órdenes de servicio de esta mascota aparecerán aquí."
+                    ) }}
+
+                {% endif %}
+
+            {% endcall %}
+
+        </section>
+        <section id="tab-archivos" class="record-tab-panel">
+          {% call info_card('Archivos') %}
+
+          {% if archivos %}
+            <!-- Archivos -->
+          {% else %}
+            {{ empty_state('📂', 'No existen archivos', 'Aquí podrán almacenarse fotografías, consentimientos y documentos relacionados con la mascota.') }}
+          {% endif %}
+          {% endcall %}
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabs = document.querySelectorAll('.record-tab')
+      const panels = document.querySelectorAll('.record-tab-panel')
+    
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const target = tab.dataset.tab
+    
+          tabs.forEach((item) => {
+            item.classList.remove('active')
+          })
+    
+          panels.forEach((panel) => {
+            panel.classList.remove('active')
+          })
+    
+          tab.classList.add('active')
+    
+          const targetPanel = document.getElementById(`tab-${target}`)
+    
+          if (targetPanel) {
+            targetPanel.classList.add('active')
+          }
+        })
+      })
+    })
+  </script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Clientes | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Directorio</p>
+      <h1 class="page-title">Clientes</h1>
+
+      <p class="page-description">Consulta propietarios y mascotas registradas.</p>
+    </div>
+
+    <a href="/clientes/nuevo" class="btn btn-pets">+ Nuevo cliente</a>
+  </div>
+
+  <section class="panel">
+    <form action="/clientes" method="GET" class="row g-3 mb-4">
+      <div class="col-12 col-md-8 col-xl-5">
+        <label for="buscar" class="form-label">Buscar cliente</label>
+
+        <input type="search" id="buscar" name="buscar" class="form-control" value="{{ termino }}" placeholder="Nombre, teléfono o correo" />
+      </div>
+
+      <div class="col-12 col-md-auto d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-pets">Buscar</button>
+
+        {% if termino %}
+          <a href="/clientes" class="btn btn-outline-secondary">Limpiar</a>
+        {% endif %}
+      </div>
+    </form>
+
+    {% if clientes %}
+      <div class="client-list">
+        {% for cliente in clientes %}
+          <article class="client-card">
+            <div class="client-card__avatar">{{ cliente.nombre.0|upper }}</div>
+
+            <div class="client-card__content">
+              <div class="client-card__header">
+                <div>
+                  <h2 class="client-card__name">{{ cliente.nombre }}</h2>
+
+                  {% if cliente.activo %}
+                    <span class="status-badge status-badge--success">Activo</span>
+                  {% else %}
+                    <span class="status-badge status-badge--danger">Inactivo</span>
+                  {% endif %}
+                </div>
+
+                <div class="client-card__actions">
+                  <a href="/clientes/{{ cliente.id_cliente }}" class="btn btn-sm btn-outline-secondary">Ver</a>
+
+                  <a href="/clientes/{{ cliente.id_cliente }}/editar" class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                  <form action="/clientes/{{ cliente.id_cliente }}/estado" method="POST">
+                    <button type="submit"
+                      class="btn btn-sm
+                                            {% if cliente.activo %}
+                        
+                                                btn-outline-danger
+
+                      {% else %}
+                        
+                                                btn-outline-success
+
+                      {% endif %}
+                                        ">
+                      {% if cliente.activo %}
+                        Desactivar
+                      {% else %}
+                        Activar
+                      {% endif %}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <div class="client-card__meta">
+                <span>📞 {{ cliente.telefono or 'Sin teléfono' }}</span>
+
+                <span>✉️ {{ cliente.correo or 'Sin correo' }}</span>
+
+                <span>
+                  🐶
+                  {{ cliente.total_mascotas }}
+                  {% if cliente.total_mascotas == 1 %}
+                    mascota
+                  {% else %}
+                    mascotas
+                  {% endif %}
+                </span>
+              </div>
+
+              {% if cliente.observaciones %}
+                <p class="client-card__notes">{{ cliente.observaciones }}</p>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state__icon">👥</div>
+
+        {% if termino %}
+          <h3>No encontramos clientes</h3>
+          <p>No hay resultados para “{{ termino }}”.</p>
+        {% else %}
+          <h3>No hay clientes registrados</h3>
+          <p>Registra el primer cliente para comenzar.</p>
+
+          <a href="/clientes/nuevo" class="btn btn-pets mt-3">Registrar cliente</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

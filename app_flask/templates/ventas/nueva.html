@@ -1,0 +1,1032 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+Punto de Venta | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+
+<div class="pos-page">
+
+    <div class="pos-header">
+
+        <div>
+            <p class="page-eyebrow">
+                Punto de Venta
+            </p>
+
+            <h1 class="page-title">
+                {{ orden.folio }}
+            </h1>
+
+            <p class="page-description">
+                Venta para {{ orden.nombre_mascota }}
+                · {{ orden.nombre_cliente }}
+            </p>
+        </div>
+
+        <a
+            href="/agenda/orden/{{ orden.id_orden }}"
+            class="btn btn-outline-secondary"
+        >
+            Volver a la orden
+        </a>
+
+    </div>
+
+    <div class="pos-layout">
+
+        <!-- =====================================
+             CATÁLOGO
+        ====================================== -->
+
+        <section class="pos-catalog">
+
+            <div class="pos-order-summary">
+
+                <div class="pos-pet-avatar">
+                    {% if orden.tipo_pelo %}
+                        🐶
+                    {% else %}
+                        🐾
+                    {% endif %}
+                </div>
+
+                <div>
+                    <strong>
+                        {{ orden.nombre_mascota }}
+                    </strong>
+
+                    <span>
+                        {{ orden.numero_expediente or "Sin expediente" }}
+                    </span>
+                </div>
+
+                <div class="pos-order-summary__meta">
+                    <span>
+                        {{ orden.nombre_estilista }}
+                    </span>
+
+                    <span>
+                        {{ orden.nombre_servicio }}
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="pos-search">
+
+                <label
+                    for="buscar_producto"
+                    class="form-label"
+                >
+                    Buscar o escanear producto
+                </label>
+
+                <input
+                    type="search"
+                    id="buscar_producto"
+                    class="form-control form-control-lg"
+                    placeholder="Nombre, código de barras o categoría"
+                    autocomplete="off"
+                    autofocus
+                >
+
+                <small class="text-muted">
+                    El lector de códigos de barras puede escribir
+                    directamente en este campo.
+                </small>
+
+            </div>
+
+            <div class="pos-section-header">
+                <div>
+                    <h2>
+                        Productos
+                    </h2>
+
+                    <p>
+                        Selecciona productos para agregarlos a la venta.
+                    </p>
+                </div>
+            </div>
+
+            <div
+                id="catalogo-productos"
+                class="pos-product-grid"
+            >
+
+                {% for producto in productos %}
+
+                    <button
+                        type="button"
+                        class="pos-product-card"
+                        data-id="{{ producto.id_producto }}"
+                        data-nombre="{{ producto.nombre }}"
+                        data-precio="{{ producto.precio_venta }}"
+                        data-stock="{{ producto.stock_actual }}"
+                        data-codigo="{{ producto.codigo_barras or '' }}"
+                        data-busqueda="{{
+                            (
+                                producto.nombre ~ ' ' ~
+                                (producto.codigo_barras or '') ~ ' ' ~
+                                (producto.nombre_categoria or '')
+                            )|lower
+                        }}"
+                    >
+
+                        <div class="pos-product-card__top">
+
+                            <span class="pos-product-card__category">
+                                {{
+                                    producto.nombre_categoria
+                                    or "Sin categoría"
+                                }}
+                            </span>
+
+                            <span class="pos-product-card__stock">
+                                {{ producto.stock_actual }} disponibles
+                            </span>
+
+                        </div>
+
+                        <strong class="pos-product-card__name">
+                            {{ producto.nombre }}
+                        </strong>
+
+                        <span class="pos-product-card__price">
+                            ${{
+                                "{:,.2f}".format(
+                                    producto.precio_venta
+                                )
+                            }}
+                        </span>
+
+                    </button>
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <div class="empty-state__icon">
+                            📦
+                        </div>
+
+                        <h3>
+                            No hay productos disponibles
+                        </h3>
+
+                        <p>
+                            Registra existencias antes de realizar
+                            ventas de productos.
+                        </p>
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <!-- =====================================
+             CARRITO
+        ====================================== -->
+
+        <aside class="pos-cart">
+
+            <div class="pos-cart__header">
+
+                <div>
+                    <p class="page-eyebrow">
+                        Venta actual
+                    </p>
+
+                    <h2>
+                        Resumen
+                    </h2>
+                </div>
+
+                <span
+                    id="cantidad-articulos"
+                    class="status-badge status-badge--info"
+                >
+                    1 concepto
+                </span>
+
+            </div>
+
+            <div id="carrito" class="pos-cart__items">
+
+                <article
+                    class="pos-cart-item"
+                    data-tipo="servicio"
+                    data-id="{{ orden.id_servicio }}"
+                    data-id-tarifa="{{ tarifa.id_tarifa }}"
+                    data-precio="{{ tarifa.precio }}"
+                >
+
+                    <div class="pos-cart-item__icon">
+                        ✂️
+                    </div>
+
+                    <div class="pos-cart-item__content">
+
+                        <div class="pos-cart-item__heading">
+                            <div>
+                                <strong>
+                                    {{ orden.nombre_servicio }}
+                                </strong>
+
+                                <small>
+                                    Servicio principal
+                                </small>
+                            </div>
+
+                            <strong>
+                                ${{ "{:,.2f}".format(tarifa.precio) }}
+                            </strong>
+                        </div>
+
+                        <div class="pos-cart-item__details">
+
+                            <span>
+                                {% if orden.tamano == "toy_chico" %}
+                                    Toy / Chico
+                                {% elif orden.tamano == "mediano" %}
+                                    Mediano
+                                {% elif orden.tamano == "grande" %}
+                                    Grande
+                                {% elif orden.tamano == "extra_grande" %}
+                                    Extra grande
+                                {% endif %}
+                            </span>
+
+                            <span>
+                                Pelo {{ orden.tipo_pelo }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+            <div class="pos-cart__totals">
+
+                <div class="pos-total-row">
+                    <span>
+                        Subtotal
+                    </span>
+
+                    <strong id="subtotal">
+                        ${{ "{:,.2f}".format(tarifa.precio) }}
+                    </strong>
+                </div>
+
+                <div class="pos-total-row pos-total-row--grand">
+                    <span>
+                        Total
+                    </span>
+
+                    <strong id="total">
+                        ${{ "{:,.2f}".format(tarifa.precio) }}
+                    </strong>
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                id="boton-cobrar"
+                class="btn btn-pets btn-lg w-100"
+            >
+                Cobrar
+            </button>
+
+            <p class="pos-cart__notice">
+                En la siguiente fase se habilitarán pagos
+                en efectivo, tarjeta, transferencia y pago mixto.
+            </p>
+
+        </aside>
+
+    </div>
+    <dialog id="modal-cobro" class="payment-dialog">
+
+        <div class="payment-dialog__header">
+            <div>
+                <p class="page-eyebrow">
+                    Finalizar venta
+                </p>
+
+                <h2>
+                    Registrar pago
+                </h2>
+            </div>
+
+            <button
+                type="button"
+                id="cerrar-modal-cobro"
+                class="payment-dialog__close"
+                aria-label="Cerrar"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="payment-dialog__body">
+
+            <div class="payment-total">
+                <span>Total a cobrar</span>
+
+                <strong id="modal-total">
+                    $0.00
+                </strong>
+            </div>
+
+            <div class="payment-section-header">
+                <div>
+                    <h3>Pagos</h3>
+
+                    <p>
+                        Puedes combinar efectivo, tarjeta y transferencia.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    id="agregar-pago"
+                    class="btn btn-sm btn-outline-secondary"
+                >
+                    + Agregar pago
+                </button>
+            </div>
+
+            <div id="lista-pagos" class="payment-list"></div>
+
+            <div class="payment-summary">
+
+                <div>
+                    <span>Total pagado</span>
+                    <strong id="total-pagado">$0.00</strong>
+                </div>
+
+                <div>
+                    <span>Restante</span>
+                    <strong id="total-restante">$0.00</strong>
+                </div>
+
+                <div>
+                    <span>Cambio</span>
+                    <strong id="total-cambio">$0.00</strong>
+                </div>
+
+            </div>
+
+            <div
+                id="mensaje-cobro"
+                class="alert alert-danger d-none"
+            ></div>
+
+        </div>
+
+        <div class="payment-dialog__footer">
+
+            <button
+                type="button"
+                id="cancelar-cobro"
+                class="btn btn-outline-secondary"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="button"
+                id="confirmar-cobro"
+                class="btn btn-pets"
+                disabled
+            >
+                Confirmar cobro
+            </button>
+
+        </div>
+
+    </dialog>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const buscador = document.getElementById("buscar_producto");
+    const tarjetas = Array.from(
+        document.querySelectorAll(".pos-product-card")
+    );
+
+    const carrito = document.getElementById("carrito");
+    const subtotalElemento = document.getElementById("subtotal");
+    const totalElemento = document.getElementById("total");
+    const cantidadElemento = document.getElementById(
+        "cantidad-articulos"
+    );
+
+    const productosCarrito = new Map();
+
+    const modalCobro = document.getElementById("modal-cobro");
+    const listaPagos = document.getElementById("lista-pagos");
+    const modalTotal = document.getElementById("modal-total");
+    const totalPagadoElemento = document.getElementById("total-pagado");
+    const totalRestanteElemento = document.getElementById("total-restante");
+    const totalCambioElemento = document.getElementById("total-cambio");
+    const confirmarCobro = document.getElementById("confirmar-cobro");
+    const mensajeCobro = document.getElementById("mensaje-cobro");
+
+    let totalVenta = Number(
+        document.querySelector(
+            '.pos-cart-item[data-tipo="servicio"]'
+        ).dataset.precio
+    );
+
+    let contadorPagos = 0;
+    let procesandoCobro = false;
+
+
+    function normalizarTexto(texto) {
+        return String(texto || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    }
+
+    function formatoMoneda(cantidad) {
+        return new Intl.NumberFormat(
+            "es-MX",
+            {
+                style: "currency",
+                currency: "MXN"
+            }
+        ).format(cantidad);
+    }
+
+    function filtrarProductos() {
+        const termino = normalizarTexto(buscador.value);
+
+        tarjetas.forEach((tarjeta) => {
+            const busqueda = normalizarTexto(
+                tarjeta.dataset.busqueda
+            );
+
+            tarjeta.hidden = !busqueda.includes(termino);
+        });
+    }
+
+    function calcularTotales() {
+        let subtotal = Number(
+            document.querySelector(
+                '.pos-cart-item[data-tipo="servicio"]'
+            ).dataset.precio
+        );
+
+        productosCarrito.forEach((producto) => {
+            subtotal += producto.precio * producto.cantidad;
+        });
+
+        totalVenta = Number(subtotal.toFixed(2));
+
+        subtotalElemento.textContent = formatoMoneda(totalVenta);
+        totalElemento.textContent = formatoMoneda(totalVenta);
+
+        const cantidadConceptos = 1 + productosCarrito.size;
+
+        cantidadElemento.textContent = cantidadConceptos === 1
+            ? "1 concepto"
+            : `${cantidadConceptos} conceptos`;
+
+        if (modalCobro.open) {
+            actualizarResumenPagos();
+        }
+    }
+
+    function renderizarProductosCarrito() {
+        carrito
+            .querySelectorAll(
+                '.pos-cart-item[data-tipo="producto"]'
+            )
+            .forEach((elemento) => elemento.remove());
+
+        productosCarrito.forEach((producto) => {
+            const elemento = document.createElement("article");
+
+            elemento.className = "pos-cart-item";
+            elemento.dataset.tipo = "producto";
+            elemento.dataset.id = producto.id;
+
+            elemento.innerHTML = `
+                <div class="pos-cart-item__icon">
+                    📦
+                </div>
+
+                <div class="pos-cart-item__content">
+
+                    <div class="pos-cart-item__heading">
+                        <div>
+                            <strong>
+                                ${producto.nombre}
+                            </strong>
+
+                            <small>
+                                ${formatoMoneda(producto.precio)}
+                                por unidad
+                            </small>
+                        </div>
+
+                        <strong>
+                            ${formatoMoneda(
+                                producto.precio * producto.cantidad
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="pos-quantity">
+
+                        <button
+                            type="button"
+                            class="pos-quantity__button"
+                            data-action="decrementar"
+                            data-id="${producto.id}"
+                        >
+                            −
+                        </button>
+
+                        <span>
+                            ${producto.cantidad}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="pos-quantity__button"
+                            data-action="incrementar"
+                            data-id="${producto.id}"
+                        >
+                            +
+                        </button>
+
+                        <button
+                            type="button"
+                            class="pos-remove-item"
+                            data-action="eliminar"
+                            data-id="${producto.id}"
+                        >
+                            Eliminar
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+            carrito.appendChild(elemento);
+        });
+
+        calcularTotales();
+    }
+
+    function agregarProducto(tarjeta) {
+        const id = tarjeta.dataset.id;
+        const stock = Number(tarjeta.dataset.stock);
+
+        if (productosCarrito.has(id)) {
+            const producto = productosCarrito.get(id);
+
+            if (producto.cantidad >= stock) {
+                alert(
+                    "No hay más existencias disponibles "
+                    + "para este producto."
+                );
+                return;
+            }
+
+            producto.cantidad += 1;
+        } else {
+            productosCarrito.set(
+                id,
+                {
+                    id,
+                    nombre: tarjeta.dataset.nombre,
+                    precio: Number(tarjeta.dataset.precio),
+                    stock,
+                    cantidad: 1
+                }
+            );
+        }
+
+        renderizarProductosCarrito();
+    }
+
+    function crearFilaPago(
+        metodo = "efectivo",
+        monto = "",
+        referencia = ""
+    ) {
+        contadorPagos += 1;
+
+        const fila = document.createElement("div");
+        fila.className = "payment-row";
+        fila.dataset.paymentId = contadorPagos;
+
+        fila.innerHTML = `
+            <div>
+                <label class="form-label">
+                    Método
+                </label>
+
+                <select class="form-select payment-method">
+                    <option value="efectivo">
+                        Efectivo
+                    </option>
+
+                    <option value="tarjeta">
+                        Tarjeta
+                    </option>
+
+                    <option value="transferencia">
+                        Transferencia
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label class="form-label">
+                    Monto
+                </label>
+
+                <input
+                    type="number"
+                    class="form-control payment-amount"
+                    min="0.01"
+                    step="0.01"
+                    value="${monto}"
+                    placeholder="0.00"
+                >
+            </div>
+
+            <div class="payment-reference-container">
+                <label class="form-label">
+                    Referencia
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control payment-reference"
+                    maxlength="100"
+                    value="${referencia}"
+                    placeholder="Opcional"
+                >
+            </div>
+
+            <button
+                type="button"
+                class="payment-remove"
+                aria-label="Eliminar pago"
+            >
+                ×
+            </button>
+        `;
+
+        fila.querySelector(".payment-method").value = metodo;
+
+        listaPagos.appendChild(fila);
+
+        actualizarReferenciaPago(fila);
+        actualizarResumenPagos();
+    }
+
+    function actualizarReferenciaPago(fila) {
+        const metodo = fila.querySelector(
+            ".payment-method"
+        ).value;
+
+        const contenedor = fila.querySelector(
+            ".payment-reference-container"
+        );
+
+        contenedor.hidden = metodo === "efectivo";
+    }
+
+    function obtenerPagosFormulario() {
+        return Array.from(
+            listaPagos.querySelectorAll(".payment-row")
+        ).map((fila) => ({
+            metodo: fila.querySelector(
+                ".payment-method"
+            ).value,
+
+            monto: fila.querySelector(
+                ".payment-amount"
+            ).value,
+
+            referencia: fila.querySelector(
+                ".payment-reference"
+            ).value.trim()
+        }));
+    }
+
+    function actualizarResumenPagos() {
+        const pagos = obtenerPagosFormulario();
+
+        const totalPagado = pagos.reduce(
+            (acumulado, pago) => {
+                return acumulado + Number(pago.monto || 0);
+            },
+            0
+        );
+
+        const diferencia = totalPagado - totalVenta;
+        const restante = Math.max(totalVenta - totalPagado, 0);
+        const cambio = Math.max(diferencia, 0);
+
+        modalTotal.textContent = formatoMoneda(totalVenta);
+        totalPagadoElemento.textContent = formatoMoneda(totalPagado);
+        totalRestanteElemento.textContent = formatoMoneda(restante);
+        totalCambioElemento.textContent = formatoMoneda(cambio);
+
+        const tienePagoInvalido = pagos.some((pago) => {
+            return Number(pago.monto) <= 0;
+        });
+
+        const tieneEfectivo = pagos.some(
+            (pago) => pago.metodo === "efectivo"
+        );
+
+        const cambioValido = cambio === 0 || tieneEfectivo;
+
+        confirmarCobro.disabled = (
+            pagos.length === 0 ||
+            totalPagado < totalVenta ||
+            tienePagoInvalido ||
+            !cambioValido ||
+            procesandoCobro
+        );
+
+        if (cambio > 0 && !tieneEfectivo) {
+            mostrarErrorCobro(
+                "Solo un pago en efectivo puede generar cambio."
+            );
+        } else {
+            ocultarErrorCobro();
+        }
+    }
+
+    function mostrarErrorCobro(mensaje) {
+        mensajeCobro.textContent = mensaje;
+        mensajeCobro.classList.remove("d-none");
+    }
+
+    function ocultarErrorCobro() {
+        mensajeCobro.textContent = "";
+        mensajeCobro.classList.add("d-none");
+    }
+
+    function abrirModalCobro() {
+        listaPagos.innerHTML = "";
+        contadorPagos = 0;
+        procesandoCobro = false;
+
+        crearFilaPago(
+            "efectivo",
+            totalVenta.toFixed(2)
+        );
+
+        modalTotal.textContent = formatoMoneda(totalVenta);
+        ocultarErrorCobro();
+
+        modalCobro.showModal();
+    }
+
+    function cerrarModalCobro() {
+        if (procesandoCobro) {
+            return;
+        }
+
+        modalCobro.close();
+    }
+
+    async function procesarCobro() {
+        if (procesandoCobro) {
+            return;
+        }
+
+        const pagos = obtenerPagosFormulario();
+
+        const productos = Array.from(
+            productosCarrito.values()
+        ).map((producto) => ({
+            id_producto: Number(producto.id),
+            cantidad: producto.cantidad
+        }));
+
+        const servicioElemento = document.querySelector(
+            '.pos-cart-item[data-tipo="servicio"]'
+        );
+
+        const payload = {
+            id_orden: Number("{{ orden.id_orden }}"),
+            id_tarifa: Number(servicioElemento.dataset.idTarifa),
+
+            productos,
+            pagos,
+
+            descuento: "0.00",
+            impuestos: "0.00"
+        };
+
+        procesandoCobro = true;
+        confirmarCobro.disabled = true;
+        confirmarCobro.textContent = "Procesando...";
+        ocultarErrorCobro();
+
+        try {
+            const respuesta = await fetch(
+                "/ventas/cobrar",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            const resultado = await respuesta.json();
+
+            if (!respuesta.ok || !resultado.exito) {
+                throw new Error(
+                    resultado.mensaje ||
+                    "No fue posible registrar la venta."
+                );
+            }
+
+            confirmarCobro.textContent = "Venta registrada";
+
+            window.location.href = resultado.url_redireccion;
+
+        } catch (error) {
+            procesandoCobro = false;
+            confirmarCobro.textContent = "Confirmar cobro";
+
+            mostrarErrorCobro(error.message);
+            actualizarResumenPagos();
+        }
+    }
+
+
+    tarjetas.forEach((tarjeta) => {
+        tarjeta.addEventListener("click", () => {
+            agregarProducto(tarjeta);
+            buscador.focus();
+        });
+    });
+
+    carrito.addEventListener("click", (evento) => {
+        const boton = evento.target.closest("[data-action]");
+
+        if (!boton) {
+            return;
+        }
+
+        const id = boton.dataset.id;
+        const accion = boton.dataset.action;
+        const producto = productosCarrito.get(id);
+
+        if (!producto) {
+            return;
+        }
+
+        if (accion === "incrementar") {
+            if (producto.cantidad >= producto.stock) {
+                alert(
+                    "No hay más existencias disponibles "
+                    + "para este producto."
+                );
+                return;
+            }
+
+            producto.cantidad += 1;
+        }
+
+        if (accion === "decrementar") {
+            producto.cantidad -= 1;
+
+            if (producto.cantidad <= 0) {
+                productosCarrito.delete(id);
+            }
+        }
+
+        if (accion === "eliminar") {
+            productosCarrito.delete(id);
+        }
+
+        renderizarProductosCarrito();
+    });
+
+    buscador.addEventListener(
+        "input",
+        filtrarProductos
+    );
+
+    buscador.addEventListener("keydown", (evento) => {
+        if (evento.key !== "Enter") {
+            return;
+        }
+
+        evento.preventDefault();
+
+        const termino = buscador.value.trim();
+
+        const productoCodigo = tarjetas.find(
+            (tarjeta) =>
+                tarjeta.dataset.codigo === termino &&
+                !tarjeta.hidden
+        );
+
+        if (productoCodigo) {
+            agregarProducto(productoCodigo);
+            buscador.value = "";
+            filtrarProductos();
+        }
+    });
+
+    document
+        .getElementById("boton-cobrar")
+        .addEventListener(
+            "click",
+            abrirModalCobro
+        );
+
+    document
+        .getElementById("agregar-pago")
+        .addEventListener(
+            "click",
+            () => crearFilaPago()
+        );
+
+    document
+        .getElementById("cerrar-modal-cobro")
+        .addEventListener(
+            "click",
+            cerrarModalCobro
+        );
+
+    document
+        .getElementById("cancelar-cobro")
+        .addEventListener(
+            "click",
+            cerrarModalCobro
+        );
+
+    document
+        .getElementById("confirmar-cobro")
+        .addEventListener(
+            "click",
+            procesarCobro
+        );
+
+    listaPagos.addEventListener("input", () => {
+        actualizarResumenPagos();
+    });
+
+    listaPagos.addEventListener("change", (evento) => {
+        const fila = evento.target.closest(".payment-row");
+
+        if (fila) {
+            actualizarReferenciaPago(fila);
+        }
+
+        actualizarResumenPagos();
+    });
+
+    listaPagos.addEventListener("click", (evento) => {
+        const botonEliminar = evento.target.closest(
+            ".payment-remove"
+        );
+
+        if (!botonEliminar) {
+            return;
+        }
+
+        botonEliminar.closest(".payment-row").remove();
+
+        actualizarResumenPagos();
+    });
+
+    modalCobro.addEventListener("cancel", (evento) => {
+        evento.preventDefault();
+        cerrarModalCobro();
+    });
+
+    calcularTotales();
+});
+</script>
+
+{% endblock %}

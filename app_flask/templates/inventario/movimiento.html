@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+Nuevo movimiento | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+
+{% set formulario = session.get("formulario_movimiento", {}) %}
+
+<div class="page-header">
+    <div>
+        <p class="page-eyebrow">Inventario</p>
+        <h1 class="page-title">Nuevo movimiento</h1>
+        <p class="page-description">
+            Registra una entrada, salida o corrección de existencias.
+        </p>
+    </div>
+
+    <a href="/inventario" class="btn btn-outline-secondary">
+        Volver
+    </a>
+</div>
+
+<form action="/inventario/movimiento/crear" method="POST">
+
+    <section class="panel">
+        <div class="row g-4">
+
+            <div class="col-12 col-lg-7">
+                <label for="id_producto" class="form-label">
+                    Producto *
+                </label>
+
+                <select
+                    id="id_producto"
+                    name="id_producto"
+                    class="form-select"
+                    required
+                >
+                    <option value="">Selecciona un producto</option>
+
+                    {% for producto in productos %}
+                        {% set seleccionado =
+                            formulario.get("id_producto", id_producto_seleccionado)
+                        %}
+
+                        <option
+                            value="{{ producto.id_producto }}"
+                            {% if seleccionado|string == producto.id_producto|string %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ producto.nombre }}
+                            — Stock: {{ producto.stock_actual }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <label for="tipo_movimiento" class="form-label">
+                    Tipo de movimiento *
+                </label>
+
+                <select
+                    id="tipo_movimiento"
+                    name="tipo_movimiento"
+                    class="form-select"
+                    required
+                >
+                    <option value="">Selecciona</option>
+
+                    <option
+                        value="entrada"
+                        {% if formulario.get("tipo_movimiento") == "entrada" %}
+                            selected
+                        {% endif %}
+                    >
+                        Entrada
+                    </option>
+
+                    <option
+                        value="salida"
+                        {% if formulario.get("tipo_movimiento") == "salida" %}
+                            selected
+                        {% endif %}
+                    >
+                        Salida
+                    </option>
+
+                    <option
+                        value="ajuste"
+                        {% if formulario.get("tipo_movimiento") == "ajuste" %}
+                            selected
+                        {% endif %}
+                    >
+                        Ajuste
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-2">
+                <label for="cantidad" class="form-label">
+                    Cantidad *
+                </label>
+
+                <input
+                    type="number"
+                    id="cantidad"
+                    name="cantidad"
+                    class="form-control"
+                    value="{{ formulario.get('cantidad', '') }}"
+                    step="1"
+                    required
+                >
+            </div>
+
+            <div class="col-12">
+                <div class="alert alert-light border">
+                    <strong>Considera lo siguiente:</strong>
+
+                    <div class="mt-2">
+                        Para entradas y salidas utiliza cantidades positivas.
+                        En ajustes puedes usar, por ejemplo,
+                        <code>2</code> o <code>-2</code>.
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label for="motivo" class="form-label">
+                    Motivo *
+                </label>
+
+                <input
+                    type="text"
+                    id="motivo"
+                    name="motivo"
+                    class="form-control"
+                    value="{{ formulario.get('motivo', '') }}"
+                    maxlength="150"
+                    placeholder="Compra de mercancía, producto dañado, conteo físico..."
+                    required
+                >
+            </div>
+
+            <div class="col-12">
+                <label for="observaciones" class="form-label">
+                    Observaciones
+                </label>
+
+                <textarea
+                    id="observaciones"
+                    name="observaciones"
+                    class="form-control"
+                    rows="3"
+                >{{ formulario.get("observaciones", "") }}</textarea>
+            </div>
+
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-end gap-2">
+            <a href="/inventario" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+
+            <button type="submit" class="btn btn-pets">
+                Registrar movimiento
+            </button>
+        </div>
+    </section>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Editar cliente | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Clientes</p>
+      <h1 class="page-title">Editar cliente</h1>
+
+      <p class="page-description">Actualiza la información de {{ cliente.nombre }}.</p>
+    </div>
+
+    <a href="/clientes/{{ cliente.id_cliente }}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <form action="/clientes/{{ cliente.id_cliente }}/actualizar" method="POST">
+    {% set texto_boton = 'Guardar cambios' %}
+    {% set url_cancelar = '/clientes/' ~ cliente.id_cliente %}
+
+    {% include 'clientes/_formulario.html' %}
+  </form>
+{% endblock %}

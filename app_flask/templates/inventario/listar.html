@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Inventario | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Productos</p>
+      <h1 class="page-title">Inventario</h1>
+      <p class="page-description">Consulta existencias y movimientos de productos.</p>
+    </div>
+
+    <a href="/inventario/movimiento" class="btn btn-pets">+ Nuevo movimiento</a>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-xl-5">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Existencias actuales</h2>
+            <p class="panel-description">Productos disponibles para venta.</p>
+          </div>
+        </div>
+
+        {% if productos %}
+          <div class="table-container">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Existencia</th>
+                  <th></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for producto in productos %}
+                  <tr>
+                    <td>
+                      <strong>{{ producto.nombre }}</strong>
+
+                      <small class="d-block text-muted">{{ producto.nombre_categoria or 'Sin categoría' }}</small>
+                    </td>
+
+                    <td>
+                      {% if producto.stock_actual == 0 %}
+                        <span class="status-badge status-badge--danger">Sin existencias</span>
+                      {% elif producto.stock_actual <= producto.stock_minimo %}
+                        <span class="status-badge status-badge--warning">{{ producto.stock_actual }} disponibles</span>
+                      {% else %}
+                        <span class="status-badge status-badge--success">{{ producto.stock_actual }} disponibles</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-end">
+                      <a href="/inventario/movimiento?producto={{ producto.id_producto }}" class="btn btn-sm btn-outline-secondary">Movimiento</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-state__icon">📦</div>
+            <h3>No hay productos activos</h3>
+            <p>Registra productos antes de administrar existencias.</p>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-7">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Historial de movimientos</h2>
+            <p class="panel-description">Entradas, salidas y ajustes registrados.</p>
+          </div>
+        </div>
+
+        <form action="/inventario" method="GET" class="row g-2 mb-4">
+          <div class="col">
+            <input type="search" name="buscar" class="form-control" value="{{ termino }}" placeholder="Producto, código o motivo" />
+          </div>
+
+          <div class="col-auto">
+            <button class="btn btn-outline-secondary">Buscar</button>
+          </div>
+
+          {% if termino %}
+            <div class="col-auto">
+              <a href="/inventario" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
+          {% endif %}
+        </form>
+
+        {% if movimientos %}
+          <div class="table-container">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Producto</th>
+                  <th>Movimiento</th>
+                  <th>Cantidad</th>
+                  <th>Registró</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for movimiento in movimientos %}
+                  <tr>
+                    <td>{{ movimiento.fecha_movimiento.strftime('%d/%m/%Y %H:%M') }}</td>
+
+                    <td>
+                      <strong>{{ movimiento.nombre_producto }}</strong>
+
+                      {% if movimiento.motivo %}
+                        <small class="d-block text-muted">{{ movimiento.motivo }}</small>
+                      {% endif %}
+                    </td>
+
+                    <td>
+                      {% if movimiento.tipo_movimiento == 'entrada' %}
+                        <span class="status-badge status-badge--success">Entrada</span>
+                      {% elif movimiento.tipo_movimiento == 'salida' %}
+                        <span class="status-badge status-badge--danger">Salida</span>
+                      {% else %}
+                        <span class="status-badge status-badge--warning">Ajuste</span>
+                      {% endif %}
+                    </td>
+
+                    <td>
+                      {% if movimiento.tipo_movimiento == 'entrada' %}
+                        +{{ movimiento.cantidad }}
+                      {% elif movimiento.tipo_movimiento == 'salida' %}
+                        -{{ movimiento.cantidad }}
+                      {% elif movimiento.cantidad > 0 %}
+                        +{{ movimiento.cantidad }}
+                      {% else %}
+                        {{ movimiento.cantidad }}
+                      {% endif %}
+                    </td>
+
+                    <td>{{ movimiento.nombre_usuario }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-state__icon">📋</div>
+            <h3>No hay movimientos registrados</h3>
+            <p>Las entradas, salidas y ajustes aparecerán aquí.</p>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Nueva mascota | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Mascotas</p>
+      <h1 class="page-title">Nueva mascota</h1>
+
+      <p class="page-description">Registra una mascota para {{ cliente.nombre }}.</p>
+    </div>
+
+    <a href="/clientes/{{ cliente.id_cliente }}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <form action="/clientes/{{ cliente.id_cliente }}/mascotas/crear" method="POST">
+    {% set mascota = null %}
+    {% set texto_boton = 'Guardar mascota' %}
+    {% set url_cancelar = '/clientes/' ~ cliente.id_cliente %}
+
+    {% include 'mascotas/_formulario.html' %}
+  </form>
+{% endblock %}
