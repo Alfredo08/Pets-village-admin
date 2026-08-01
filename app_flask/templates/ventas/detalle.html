@@ -17,10 +17,18 @@
 
     <div class="d-flex flex-wrap gap-2">
       <a href="/agenda" class="btn btn-outline-secondary">Volver a agenda</a>
-
+      <!-- Para mac 
       <form action="/ventas/{{ venta.id_venta }}/imprimir" method="POST" class="d-inline" id="form-imprimir-ticket">
         <button type="submit" class="btn btn-pets" id="boton-imprimir-ticket">🖨️ Imprimir ticket</button>
       </form>
+      -->
+      <button
+        type="button"
+        class="btn btn-pets"
+        onclick="window.print()"
+    >
+        🖨️ Imprimir ticket
+    </button>
     </div>
   </div>
 

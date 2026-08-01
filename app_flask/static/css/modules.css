@@ -2800,3 +2800,73 @@ ORDER CARD
 .inventory-product-item[hidden] {
     display: none;
 }
+
+/* =====================================================
+   IMPRESIÓN DE TICKET 58 MM
+===================================================== */
+
+@media print {
+
+    @page {
+        size: 58mm auto;
+        margin: 2mm;
+    }
+
+    body {
+        width: 54mm;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        color: #000;
+        font-family: monospace;
+        font-size: 10px;
+    }
+
+    .sidebar,
+    .page-header,
+    .ticket-actions,
+    .btn,
+    .alert,
+    .no-print {
+        display: none !important;
+    }
+
+    .app-layout,
+    .main-content,
+    .panel,
+    .ticket-container {
+        display: block;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: none;
+        box-shadow: none;
+        background: #fff;
+    }
+
+    .ticket-container {
+        width: 54mm;
+    }
+
+    .ticket-header {
+        text-align: center;
+    }
+
+    .ticket-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .ticket-table th,
+    .ticket-table td {
+        padding: 2px 0;
+        border: none;
+        font-size: 9px;
+    }
+
+    .ticket-total {
+        font-size: 13px;
+        font-weight: 700;
+    }
+}

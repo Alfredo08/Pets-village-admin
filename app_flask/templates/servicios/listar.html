@@ -73,10 +73,10 @@
                   {% if servicio.precio_minimo == null %}
                     <span class="text-muted">Sin tarifas</span>
                   {% elif servicio.precio_minimo == servicio.precio_maximo %}
-                    ${{ '{:,.2f}'.format(servicio.precio_minimo) }}
+                    ${{ '{:,.2f}'.format(servicio.precio_minimo or 0) }}
                   {% else %}
-                    ${{ '{:,.2f}'.format(servicio.precio_minimo) }}
-                    – ${{ '{:,.2f}'.format(servicio.precio_maximo) }}
+                    ${{ '{:,.2f}'.format(servicio.precio_minimo or 0) }}
+                    – ${{ '{:,.2f}'.format(servicio.precio_maximo or 0) }}
                   {% endif %}
                 </td>
 
