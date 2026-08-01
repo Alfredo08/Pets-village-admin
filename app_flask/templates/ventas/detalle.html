@@ -18,7 +18,9 @@
     <div class="d-flex flex-wrap gap-2">
       <a href="/agenda" class="btn btn-outline-secondary">Volver a agenda</a>
 
-      <button type="button" class="btn btn-pets" onclick="window.print()">Imprimir ticket</button>
+      <form action="/ventas/{{ venta.id_venta }}/imprimir" method="POST" class="d-inline" id="form-imprimir-ticket">
+        <button type="submit" class="btn btn-pets" id="boton-imprimir-ticket">🖨️ Imprimir ticket</button>
+      </form>
     </div>
   </div>
 
@@ -124,4 +126,21 @@
       </section>
     </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const formulario = document.getElementById('form-imprimir-ticket')
+    
+      const boton = document.getElementById('boton-imprimir-ticket')
+    
+      if (!formulario || !boton) {
+        return
+      }
+    
+      formulario.addEventListener('submit', () => {
+        boton.disabled = true
+        boton.textContent = 'Enviando a impresora...'
+      })
+    })
+  </script>
 {% endblock %}

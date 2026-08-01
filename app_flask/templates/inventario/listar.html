@@ -1,165 +1,827 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block titulo %}
-  Inventario | PetsVillage
+Inventario | PetsVillage
 {% endblock %}
 
 {% block contenido %}
-  <div class="page-header">
+
+<div class="page-header">
+
     <div>
-      <p class="page-eyebrow">Productos</p>
-      <h1 class="page-title">Inventario</h1>
-      <p class="page-description">Consulta existencias y movimientos de productos.</p>
+
+        <p class="page-eyebrow">
+            Productos
+        </p>
+
+        <h1 class="page-title">
+            Inventario
+        </h1>
+
+        <p class="page-description">
+            Consulta existencias y movimientos de productos.
+        </p>
+
     </div>
 
-    <a href="/inventario/movimiento" class="btn btn-pets">+ Nuevo movimiento</a>
-  </div>
+    <a
+        href="/inventario/movimiento"
+        class="btn btn-pets"
+    >
+        + Nuevo movimiento
+    </a>
 
-  <div class="row g-4 mb-4">
+</div>
+
+
+<div class="row g-4 mb-4">
+
+    <!-- =====================================
+         EXISTENCIAS ACTUALES
+    ====================================== -->
+
     <div class="col-12 col-xl-5">
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title">Existencias actuales</h2>
-            <p class="panel-description">Productos disponibles para venta.</p>
-          </div>
-        </div>
 
-        {% if productos %}
-          <div class="table-container">
-            <table class="app-table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Existencia</th>
-                  <th></th>
-                </tr>
-              </thead>
+        <section class="panel">
 
-              <tbody>
-                {% for producto in productos %}
-                  <tr>
-                    <td>
-                      <strong>{{ producto.nombre }}</strong>
+            <div class="panel-header">
 
-                      <small class="d-block text-muted">{{ producto.nombre_categoria or 'Sin categoría' }}</small>
-                    </td>
+                <div>
 
-                    <td>
-                      {% if producto.stock_actual == 0 %}
-                        <span class="status-badge status-badge--danger">Sin existencias</span>
-                      {% elif producto.stock_actual <= producto.stock_minimo %}
-                        <span class="status-badge status-badge--warning">{{ producto.stock_actual }} disponibles</span>
-                      {% else %}
-                        <span class="status-badge status-badge--success">{{ producto.stock_actual }} disponibles</span>
-                      {% endif %}
-                    </td>
+                    <h2 class="panel-title">
+                        Existencias actuales
+                    </h2>
 
-                    <td class="text-end">
-                      <a href="/inventario/movimiento?producto={{ producto.id_producto }}" class="btn btn-sm btn-outline-secondary">Movimiento</a>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div class="empty-state">
-            <div class="empty-state__icon">📦</div>
-            <h3>No hay productos activos</h3>
-            <p>Registra productos antes de administrar existencias.</p>
-          </div>
-        {% endif %}
-      </section>
+                    <p class="panel-description">
+                        Productos disponibles para venta.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- =============================
+                 FILTRO LOCAL
+            ============================== -->
+
+            <div class="inventory-product-search">
+
+                <label
+                    for="buscar_producto_inventario"
+                    class="form-label"
+                >
+                    Buscar producto
+                </label>
+
+                <div class="inventory-product-search__control">
+
+                    <span aria-hidden="true">
+                        🔎
+                    </span>
+
+                    <input
+                        type="search"
+                        id="buscar_producto_inventario"
+                        class="form-control"
+                        placeholder="Nombre, categoría o código"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+                <small
+                    id="resultado_productos_inventario"
+                    class="text-muted"
+                ></small>
+
+            </div>
+
+
+            {% if productos %}
+
+                <div
+                    id="contenedor_tabla_productos"
+                    class="table-container"
+                >
+
+                    <table class="app-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Producto
+                                </th>
+
+                                <th>
+                                    Existencia
+                                </th>
+
+                                <th></th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="tabla_productos_inventario">
+
+                            {% for producto in productos %}
+
+                                <tr
+                                    class="inventory-product-row"
+                                    data-nombre="{{
+                                        (
+                                            producto.nombre
+                                            or ""
+                                        )|lower|e
+                                    }}"
+                                    data-categoria="{{
+                                        (
+                                            producto.nombre_categoria
+                                            or ""
+                                        )|lower|e
+                                    }}"
+                                    data-codigo="{{
+                                        (
+                                            producto.codigo_barras
+                                            or ""
+                                        )|string|trim|e
+                                    }}"
+                                >
+
+                                    <!-- PRODUCTO -->
+
+                                    <td>
+
+                                        <strong>
+                                            {{ producto.nombre }}
+                                        </strong>
+
+                                        <small class="d-block text-muted">
+                                            {{
+                                                producto.nombre_categoria
+                                                or "Sin categoría"
+                                            }}
+                                        </small>
+
+                                        {% if producto.codigo_barras %}
+
+                                            <small class="d-block text-muted">
+                                                Código:
+                                                {{ producto.codigo_barras }}
+                                            </small>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- EXISTENCIA -->
+
+                                    <td>
+
+                                        {% if producto.stock_actual == 0 %}
+
+                                            <span
+                                                class="
+                                                    status-badge
+                                                    status-badge--danger
+                                                "
+                                            >
+                                                Sin existencias
+                                            </span>
+
+                                        {% elif
+                                            producto.stock_actual
+                                            <= producto.stock_minimo
+                                        %}
+
+                                            <span
+                                                class="
+                                                    status-badge
+                                                    status-badge--warning
+                                                "
+                                            >
+                                                {{ producto.stock_actual }}
+                                                disponibles
+                                            </span>
+
+                                        {% else %}
+
+                                            <span
+                                                class="
+                                                    status-badge
+                                                    status-badge--success
+                                                "
+                                            >
+                                                {{ producto.stock_actual }}
+                                                disponibles
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- ACCIÓN -->
+
+                                    <td class="text-end">
+
+                                        <a
+                                            href="/inventario/movimiento?producto={{ producto.id_producto }}"
+                                            class="
+                                                btn
+                                                btn-sm
+                                                btn-outline-secondary
+                                            "
+                                        >
+                                            Movimiento
+                                        </a>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- SIN RESULTADOS DEL FILTRO -->
+
+                <div
+                    id="sin_resultados_productos"
+                    class="empty-state d-none"
+                >
+
+                    <div class="empty-state__icon">
+                        🔎
+                    </div>
+
+                    <h3>
+                        No se encontraron productos
+                    </h3>
+
+                    <p>
+                        Prueba con otro nombre, categoría
+                        o código de barras.
+                    </p>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <div class="empty-state__icon">
+                        📦
+                    </div>
+
+                    <h3>
+                        No hay productos activos
+                    </h3>
+
+                    <p>
+                        Registra productos antes de administrar existencias.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
     </div>
+
+
+    <!-- =====================================
+         HISTORIAL DE MOVIMIENTOS
+    ====================================== -->
 
     <div class="col-12 col-xl-7">
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title">Historial de movimientos</h2>
-            <p class="panel-description">Entradas, salidas y ajustes registrados.</p>
-          </div>
-        </div>
 
-        <form action="/inventario" method="GET" class="row g-2 mb-4">
-          <div class="col">
-            <input type="search" name="buscar" class="form-control" value="{{ termino }}" placeholder="Producto, código o motivo" />
-          </div>
+        <section class="panel">
 
-          <div class="col-auto">
-            <button class="btn btn-outline-secondary">Buscar</button>
-          </div>
+            <div class="panel-header">
 
-          {% if termino %}
-            <div class="col-auto">
-              <a href="/inventario" class="btn btn-outline-secondary">Limpiar</a>
+                <div>
+
+                    <h2 class="panel-title">
+                        Historial de movimientos
+                    </h2>
+
+                    <p class="panel-description">
+                        Entradas, salidas y ajustes registrados.
+                    </p>
+
+                </div>
+
             </div>
-          {% endif %}
-        </form>
 
-        {% if movimientos %}
-          <div class="table-container">
-            <table class="app-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Producto</th>
-                  <th>Movimiento</th>
-                  <th>Cantidad</th>
-                  <th>Registró</th>
-                </tr>
-              </thead>
 
-              <tbody>
-                {% for movimiento in movimientos %}
-                  <tr>
-                    <td>{{ movimiento.fecha_movimiento.strftime('%d/%m/%Y %H:%M') }}</td>
+            <!-- FILTRO DEL HISTORIAL -->
 
-                    <td>
-                      <strong>{{ movimiento.nombre_producto }}</strong>
+            <form
+                action="/inventario"
+                method="GET"
+                class="row g-2 mb-4"
+            >
 
-                      {% if movimiento.motivo %}
-                        <small class="d-block text-muted">{{ movimiento.motivo }}</small>
-                      {% endif %}
-                    </td>
+                <div class="col">
 
-                    <td>
-                      {% if movimiento.tipo_movimiento == 'entrada' %}
-                        <span class="status-badge status-badge--success">Entrada</span>
-                      {% elif movimiento.tipo_movimiento == 'salida' %}
-                        <span class="status-badge status-badge--danger">Salida</span>
-                      {% else %}
-                        <span class="status-badge status-badge--warning">Ajuste</span>
-                      {% endif %}
-                    </td>
+                    <input
+                        type="search"
+                        name="buscar"
+                        class="form-control"
+                        value="{{ termino }}"
+                        placeholder="Producto, código o motivo"
+                        autocomplete="off"
+                    >
 
-                    <td>
-                      {% if movimiento.tipo_movimiento == 'entrada' %}
-                        +{{ movimiento.cantidad }}
-                      {% elif movimiento.tipo_movimiento == 'salida' %}
-                        -{{ movimiento.cantidad }}
-                      {% elif movimiento.cantidad > 0 %}
-                        +{{ movimiento.cantidad }}
-                      {% else %}
-                        {{ movimiento.cantidad }}
-                      {% endif %}
-                    </td>
+                </div>
 
-                    <td>{{ movimiento.nombre_usuario }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div class="empty-state">
-            <div class="empty-state__icon">📋</div>
-            <h3>No hay movimientos registrados</h3>
-            <p>Las entradas, salidas y ajustes aparecerán aquí.</p>
-          </div>
-        {% endif %}
-      </section>
+                <div class="col-auto">
+
+                    <button
+                        type="submit"
+                        class="btn btn-outline-secondary"
+                    >
+                        Buscar
+                    </button>
+
+                </div>
+
+                {% if termino %}
+
+                    <div class="col-auto">
+
+                        <a
+                            href="/inventario"
+                            class="btn btn-outline-secondary"
+                        >
+                            Limpiar
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+            </form>
+
+
+            {% if movimientos %}
+
+                <div class="table-container">
+
+                    <table class="app-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Fecha
+                                </th>
+
+                                <th>
+                                    Producto
+                                </th>
+
+                                <th>
+                                    Movimiento
+                                </th>
+
+                                <th>
+                                    Cantidad
+                                </th>
+
+                                <th>
+                                    Registró
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for movimiento in movimientos %}
+
+                                <tr>
+
+                                    <td>
+
+                                        {% if movimiento.fecha_movimiento %}
+
+                                            {{
+                                                movimiento.fecha_movimiento
+                                                .strftime(
+                                                    "%d/%m/%Y %H:%M"
+                                                )
+                                            }}
+
+                                        {% else %}
+
+                                            —
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <strong>
+                                            {{ movimiento.nombre_producto }}
+                                        </strong>
+
+                                        {% if movimiento.codigo_barras %}
+
+                                            <small class="d-block text-muted">
+                                                Código:
+                                                {{ movimiento.codigo_barras }}
+                                            </small>
+
+                                        {% endif %}
+
+                                        {% if movimiento.motivo %}
+
+                                            <small class="d-block text-muted">
+                                                {{ movimiento.motivo }}
+                                            </small>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {% if
+                                            movimiento.tipo_movimiento
+                                            == "entrada"
+                                        %}
+
+                                            <span
+                                                class="
+                                                    status-badge
+                                                    status-badge--success
+                                                "
+                                            >
+                                                Entrada
+                                            </span>
+
+                                        {% elif
+                                            movimiento.tipo_movimiento
+                                            == "salida"
+                                        %}
+
+                                            <span
+                                                class="
+                                                    status-badge
+                                                    status-badge--danger
+                                                "
+                                            >
+                                                Salida
+                                            </span>
+
+                                        {% else %}
+
+                                            <span
+                                                class="
+                                                    status-badge
+                                                    status-badge--warning
+                                                "
+                                            >
+                                                Ajuste
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {% if
+                                            movimiento.tipo_movimiento
+                                            == "entrada"
+                                        %}
+
+                                            +{{ movimiento.cantidad }}
+
+                                        {% elif
+                                            movimiento.tipo_movimiento
+                                            == "salida"
+                                        %}
+
+                                            -{{ movimiento.cantidad }}
+
+                                        {% elif movimiento.cantidad > 0 %}
+
+                                            +{{ movimiento.cantidad }}
+
+                                        {% else %}
+
+                                            {{ movimiento.cantidad }}
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+                                        {{
+                                            movimiento.nombre_usuario
+                                            or "Sin información"
+                                        }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <div class="empty-state__icon">
+                        📋
+                    </div>
+
+                    <h3>
+                        No hay movimientos registrados
+                    </h3>
+
+                    <p>
+
+                        {% if termino %}
+
+                            No existen movimientos que coincidan
+                            con la búsqueda.
+
+                        {% else %}
+
+                            Las entradas, salidas y ajustes
+                            aparecerán aquí.
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
     </div>
-  </div>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const buscador = document.getElementById(
+        "buscar_producto_inventario"
+    );
+
+    const resultado = document.getElementById(
+        "resultado_productos_inventario"
+    );
+
+    const contenedorTabla = document.getElementById(
+        "contenedor_tabla_productos"
+    );
+
+    const sinResultados = document.getElementById(
+        "sin_resultados_productos"
+    );
+
+    const filasProductos = Array.from(
+        document.querySelectorAll(
+            ".inventory-product-row"
+        )
+    );
+
+    if (!buscador || filasProductos.length === 0) {
+        return;
+    }
+
+
+    function normalizarTexto(texto) {
+        return String(texto || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .trim();
+    }
+
+
+    function normalizarCodigo(codigo) {
+        return String(codigo || "")
+            .replace(/\s+/g, "")
+            .trim();
+    }
+
+
+    function filtrarProductos() {
+
+        const terminoOriginal = String(
+            buscador.value || ""
+        ).trim();
+
+        const terminoTexto = normalizarTexto(
+            terminoOriginal
+        );
+
+        const terminoCodigo = normalizarCodigo(
+            terminoOriginal
+        );
+
+        let visibles = 0;
+
+        filasProductos.forEach((fila) => {
+
+            const nombre = normalizarTexto(
+                fila.dataset.nombre
+            );
+
+            const categoria = normalizarTexto(
+                fila.dataset.categoria
+            );
+
+            const codigo = normalizarCodigo(
+                fila.dataset.codigo
+            );
+
+            const coincideNombre = (
+                terminoTexto === ""
+                || nombre.includes(
+                    terminoTexto
+                )
+            );
+
+            const coincideCategoria = (
+                terminoTexto === ""
+                || categoria.includes(
+                    terminoTexto
+                )
+            );
+
+            const coincideCodigo = (
+                terminoCodigo === ""
+                || codigo.includes(
+                    terminoCodigo
+                )
+            );
+
+            const coincide = (
+                coincideNombre
+                || coincideCategoria
+                || coincideCodigo
+            );
+
+            fila.hidden = !coincide;
+
+            if (coincide) {
+                visibles += 1;
+            }
+
+        });
+
+
+        if (resultado) {
+
+            if (terminoOriginal === "") {
+
+                resultado.textContent = "";
+
+            } else {
+
+                resultado.textContent = (
+                    visibles === 1
+                        ? "1 producto encontrado"
+                        : `${visibles} productos encontrados`
+                );
+
+            }
+
+        }
+
+
+        const noHayResultados = (
+            terminoOriginal !== ""
+            && visibles === 0
+        );
+
+        if (contenedorTabla) {
+            contenedorTabla.hidden = noHayResultados;
+        }
+
+        if (sinResultados) {
+            sinResultados.classList.toggle(
+                "d-none",
+                !noHayResultados
+            );
+        }
+
+    }
+
+
+    buscador.addEventListener(
+        "input",
+        filtrarProductos
+    );
+
+
+    /*
+     * Los lectores USB suelen funcionar como teclado
+     * y enviar Enter al terminar de leer el código.
+     * Evitamos que ese Enter provoque acciones inesperadas.
+     */
+    buscador.addEventListener(
+        "keydown",
+        (evento) => {
+
+            if (evento.key !== "Enter") {
+                return;
+            }
+
+            evento.preventDefault();
+
+            const codigoEscaneado = normalizarCodigo(
+                buscador.value
+            );
+
+            if (!codigoEscaneado) {
+                return;
+            }
+
+            const coincidenciaExacta = (
+                filasProductos.find((fila) => {
+                    return (
+                        normalizarCodigo(
+                            fila.dataset.codigo
+                        )
+                        === codigoEscaneado
+                    );
+                })
+            );
+
+            if (coincidenciaExacta) {
+
+                filasProductos.forEach((fila) => {
+                    fila.hidden = (
+                        fila !== coincidenciaExacta
+                    );
+                });
+
+                if (contenedorTabla) {
+                    contenedorTabla.hidden = false;
+                }
+
+                if (sinResultados) {
+                    sinResultados.classList.add(
+                        "d-none"
+                    );
+                }
+
+                if (resultado) {
+                    resultado.textContent = (
+                        "1 producto encontrado"
+                    );
+                }
+
+            } else {
+
+                filtrarProductos();
+
+            }
+
+        }
+    );
+
+
+    filtrarProductos();
+
+});
+</script>
+
 {% endblock %}

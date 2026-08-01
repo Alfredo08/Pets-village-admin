@@ -484,6 +484,7 @@ class Venta:
                 query = """
                     INSERT INTO ventas (
                         folio,
+                        tipo_venta,
                         id_orden,
                         id_cliente,
                         id_mascota,
@@ -496,6 +497,7 @@ class Venta:
                     )
                     VALUES (
                         NULL,
+                        'servicio',
                         %(id_orden)s,
                         %(id_cliente)s,
                         %(id_mascota)s,
@@ -767,7 +769,6 @@ class Venta:
         finally:
             conexion.close()
 
-
     ####################################################
     # OBTENER VENTA POR ID
     ####################################################
@@ -778,10 +779,19 @@ class Venta:
             SELECT
                 v.*,
 
-                c.nombre AS nombre_cliente,
+                COALESCE(
+                    c.nombre,
+                    v.nombre_cliente_rapido,
+                    'Público general'
+                ) AS nombre_cliente,
+
                 c.telefono AS telefono_cliente,
 
-                m.nombre AS nombre_mascota,
+                COALESCE(
+                    m.nombre,
+                    'Sin mascota'
+                ) AS nombre_mascota,
+
                 m.numero_expediente,
 
                 os.folio AS folio_orden,
@@ -790,13 +800,13 @@ class Venta:
 
             FROM ventas v
 
-            INNER JOIN clientes c
+            LEFT JOIN clientes c
                 ON c.id_cliente = v.id_cliente
 
-            INNER JOIN mascotas m
+            LEFT JOIN mascotas m
                 ON m.id_mascota = v.id_mascota
 
-            INNER JOIN ordenes_servicio os
+            LEFT JOIN ordenes_servicio os
                 ON os.id_orden = v.id_orden
 
             INNER JOIN usuarios u
@@ -807,7 +817,9 @@ class Venta:
             LIMIT 1;
         """
 
-        resultado = connectToMySQL(BASE_DATOS).query_db(
+        resultado = connectToMySQL(
+            BASE_DATOS
+        ).query_db(
             query,
             data
         )
@@ -816,7 +828,6 @@ class Venta:
             return None
 
         return resultado[0]
-
 
     ####################################################
     # OBTENER DETALLES
@@ -954,3 +965,953 @@ class Venta:
         )
 
         return resultado or []
+
+    ####################################################
+    # RESUMEN DE VENTAS POR FECHA
+    ####################################################
+
+    @classmethod
+    def obtener_resumen_fecha(cls, fecha):
+        query = """
+            SELECT
+                COUNT(*) AS cantidad_ventas,
+
+                COALESCE(
+                    SUM(total),
+                    0
+                ) AS total_vendido,
+
+                COALESCE(
+                    SUM(subtotal),
+                    0
+                ) AS subtotal,
+
+                COALESCE(
+                    SUM(descuento),
+                    0
+                ) AS descuentos,
+
+                COALESCE(
+                    SUM(impuestos),
+                    0
+                ) AS impuestos
+
+            FROM ventas
+
+            WHERE DATE(fecha_creacion) = %(fecha)s
+            AND estado = 'completada';
+        """
+
+        resultado = connectToMySQL(
+            BASE_DATOS
+        ).query_db(
+            query,
+            {
+                "fecha": fecha
+            }
+        )
+
+        if not resultado:
+            return {
+                "cantidad_ventas": 0,
+                "total_vendido": 0,
+                "subtotal": 0,
+                "descuentos": 0,
+                "impuestos": 0
+            }
+
+        return resultado[0]
+
+    ####################################################
+    # TOTALES POR MÉTODO DE PAGO
+    ####################################################
+
+    @classmethod
+    def obtener_totales_pago_fecha(cls, fecha):
+        query = """
+            SELECT
+                p.metodo,
+
+                COUNT(
+                    DISTINCT p.id_venta
+                ) AS cantidad_ventas,
+
+                COALESCE(
+                    SUM(p.monto),
+                    0
+                ) AS total
+
+            FROM pagos p
+
+            INNER JOIN ventas v
+                ON v.id_venta = p.id_venta
+
+            WHERE DATE(v.fecha_creacion) = %(fecha)s
+            AND v.estado = 'completada'
+
+            GROUP BY p.metodo
+
+            ORDER BY FIELD(
+                p.metodo,
+                'efectivo',
+                'tarjeta',
+                'transferencia'
+            );
+        """
+
+        resultado = connectToMySQL(
+            BASE_DATOS
+        ).query_db(
+            query,
+            {
+                "fecha": fecha
+            }
+        )
+
+        totales = {
+            "efectivo": {
+                "total": 0,
+                "cantidad_ventas": 0
+            },
+            "tarjeta": {
+                "total": 0,
+                "cantidad_ventas": 0
+            },
+            "transferencia": {
+                "total": 0,
+                "cantidad_ventas": 0
+            }
+        }
+
+        for fila in resultado or []:
+            totales[fila["metodo"]] = {
+                "total": fila["total"],
+                "cantidad_ventas": fila["cantidad_ventas"]
+            }
+
+        return totales
+
+    ####################################################
+    # TOTALES POR TIPO DE CONCEPTO
+    ####################################################
+
+    @classmethod
+    def obtener_totales_tipo_fecha(cls, fecha):
+        query = """
+            SELECT
+                vd.tipo,
+
+                COALESCE(
+                    SUM(vd.subtotal),
+                    0
+                ) AS total,
+
+                COALESCE(
+                    SUM(vd.cantidad),
+                    0
+                ) AS cantidad
+
+            FROM venta_detalles vd
+
+            INNER JOIN ventas v
+                ON v.id_venta = vd.id_venta
+
+            WHERE DATE(v.fecha_creacion) = %(fecha)s
+            AND v.estado = 'completada'
+
+            GROUP BY vd.tipo;
+        """
+
+        resultado = connectToMySQL(
+            BASE_DATOS
+        ).query_db(
+            query,
+            {
+                "fecha": fecha
+            }
+        )
+
+        totales = {
+            "servicio": {
+                "total": 0,
+                "cantidad": 0
+            },
+            "producto": {
+                "total": 0,
+                "cantidad": 0
+            }
+        }
+
+        for fila in resultado or []:
+            totales[fila["tipo"]] = {
+                "total": fila["total"],
+                "cantidad": fila["cantidad"]
+            }
+
+        return totales
+
+
+    ####################################################
+    # OBTENER VENTAS POR FECHA
+    ####################################################
+
+    @classmethod
+    def obtener_ventas_fecha(cls, fecha):
+        query = """
+            SELECT
+                v.id_venta,
+                v.folio,
+                v.tipo_venta,
+                v.total,
+                v.estado,
+                v.fecha_creacion,
+
+                os.folio AS folio_orden,
+
+                COALESCE(
+                    c.nombre,
+                    v.nombre_cliente_rapido,
+                    'Público general'
+                ) AS nombre_cliente,
+
+                m.nombre AS nombre_mascota,
+
+                u.nombre AS nombre_usuario,
+
+                GROUP_CONCAT(
+                    DISTINCT
+                    CASE p.metodo
+                        WHEN 'efectivo'
+                            THEN 'Efectivo'
+                        WHEN 'tarjeta'
+                            THEN 'Tarjeta'
+                        WHEN 'transferencia'
+                            THEN 'Transferencia'
+                        ELSE p.metodo
+                    END
+
+                    ORDER BY FIELD(
+                        p.metodo,
+                        'efectivo',
+                        'tarjeta',
+                        'transferencia'
+                    )
+
+                    SEPARATOR ' + '
+                ) AS metodos_pago
+
+            FROM ventas v
+
+            LEFT JOIN ordenes_servicio os
+                ON os.id_orden = v.id_orden
+
+            LEFT JOIN clientes c
+                ON c.id_cliente = v.id_cliente
+
+            LEFT JOIN mascotas m
+                ON m.id_mascota = v.id_mascota
+
+            INNER JOIN usuarios u
+                ON u.id_usuario = v.id_usuario
+
+            LEFT JOIN pagos p
+                ON p.id_venta = v.id_venta
+
+            WHERE DATE(v.fecha_creacion) = %(fecha)s
+            AND v.estado = 'completada'
+
+            GROUP BY
+                v.id_venta,
+                v.folio,
+                v.tipo_venta,
+                v.total,
+                v.estado,
+                v.fecha_creacion,
+                os.folio,
+                c.nombre,
+                v.nombre_cliente_rapido,
+                m.nombre,
+                u.nombre
+
+            ORDER BY
+                v.fecha_creacion DESC;
+        """
+
+        resultado = connectToMySQL(
+            BASE_DATOS
+        ).query_db(
+            query,
+            {
+                "fecha": fecha
+            }
+        )
+
+        return resultado or []
+
+    ####################################################
+    # REGISTRAR VENTA RÁPIDA DE PRODUCTOS
+    ####################################################
+
+    @classmethod
+    def registrar_venta_rapida(cls, data):
+        """
+        data esperado:
+
+        {
+            "id_usuario": 1,
+            "id_cliente": None,
+            "nombre_cliente_rapido": "Juan Pérez",
+
+            "productos": [
+                {
+                    "id_producto": 4,
+                    "cantidad": 2
+                }
+            ],
+
+            "pagos": [
+                {
+                    "metodo": "efectivo",
+                    "monto": "500.00",
+                    "referencia": None
+                }
+            ],
+
+            "descuento": "0.00",
+            "impuestos": "0.00"
+        }
+        """
+
+        conexion_mysql = connectToMySQL(
+            BASE_DATOS
+        )
+
+        conexion = conexion_mysql.connection
+
+        try:
+            conexion.begin()
+
+            with conexion.cursor() as cursor:
+
+                # ======================================
+                # 1. VALIDAR CLIENTE OPCIONAL
+                # ======================================
+
+                id_cliente = data.get(
+                    "id_cliente"
+                )
+
+                if id_cliente:
+                    try:
+                        id_cliente = int(
+                            id_cliente
+                        )
+                    except (TypeError, ValueError):
+                        raise ValueError(
+                            "El cliente seleccionado no es válido."
+                        )
+
+                    query = """
+                        SELECT id_cliente
+                        FROM clientes
+                        WHERE id_cliente = %(id_cliente)s
+                        AND activo = 1
+                        LIMIT 1;
+                    """
+
+                    cursor.execute(
+                        query,
+                        {
+                            "id_cliente": id_cliente
+                        }
+                    )
+
+                    if not cursor.fetchone():
+                        raise ValueError(
+                            "El cliente seleccionado no existe "
+                            "o se encuentra inactivo."
+                        )
+
+                else:
+                    id_cliente = None
+
+                nombre_cliente_rapido = (
+                    data.get(
+                        "nombre_cliente_rapido",
+                        ""
+                    ).strip()
+                    or None
+                )
+
+                # ======================================
+                # 2. VALIDAR PRODUCTOS
+                # ======================================
+
+                productos_solicitados = data.get(
+                    "productos",
+                    []
+                )
+
+                if (
+                    not isinstance(
+                        productos_solicitados,
+                        list
+                    )
+                    or not productos_solicitados
+                ):
+                    raise ValueError(
+                        "Debes agregar al menos un producto."
+                    )
+
+                detalles = []
+                subtotal = Decimal("0.00")
+                ids_vistos = set()
+
+                for producto_solicitado in productos_solicitados:
+
+                    try:
+                        id_producto = int(
+                            producto_solicitado[
+                                "id_producto"
+                            ]
+                        )
+
+                        cantidad = int(
+                            producto_solicitado[
+                                "cantidad"
+                            ]
+                        )
+
+                    except (
+                        KeyError,
+                        TypeError,
+                        ValueError
+                    ):
+                        raise ValueError(
+                            "Uno de los productos seleccionados "
+                            "no es válido."
+                        )
+
+                    if cantidad <= 0:
+                        raise ValueError(
+                            "La cantidad de los productos "
+                            "debe ser mayor que cero."
+                        )
+
+                    if id_producto in ids_vistos:
+                        raise ValueError(
+                            "El carrito contiene un producto duplicado."
+                        )
+
+                    ids_vistos.add(
+                        id_producto
+                    )
+
+                    query = """
+                        SELECT
+                            id_producto,
+                            nombre,
+                            precio_venta,
+                            stock_actual,
+                            activo
+                        FROM productos
+                        WHERE id_producto = %(id_producto)s
+                        LIMIT 1
+                        FOR UPDATE;
+                    """
+
+                    cursor.execute(
+                        query,
+                        {
+                            "id_producto": id_producto
+                        }
+                    )
+
+                    producto = cursor.fetchone()
+
+                    if not producto:
+                        raise ValueError(
+                            "Uno de los productos ya no existe."
+                        )
+
+                    if not producto["activo"]:
+                        raise ValueError(
+                            f"El producto {producto['nombre']} "
+                            "se encuentra inactivo."
+                        )
+
+                    stock_actual = int(
+                        producto["stock_actual"]
+                        or 0
+                    )
+
+                    if stock_actual < cantidad:
+                        raise ValueError(
+                            f"No hay suficiente stock de "
+                            f"{producto['nombre']}."
+                        )
+
+                    precio_unitario = (
+                        cls.convertir_decimal(
+                            producto["precio_venta"]
+                        )
+                    )
+
+                    if (
+                        precio_unitario is None
+                        or precio_unitario < 0
+                    ):
+                        raise ValueError(
+                            f"El precio de "
+                            f"{producto['nombre']} "
+                            "no es válido."
+                        )
+
+                    cantidad_decimal = Decimal(
+                        cantidad
+                    )
+
+                    subtotal_producto = (
+                        precio_unitario
+                        * cantidad_decimal
+                    ).quantize(
+                        cls.DOS_DECIMALES,
+                        rounding=ROUND_HALF_UP
+                    )
+
+                    detalles.append({
+                        "tipo": "producto",
+                        "id_servicio": None,
+                        "id_tarifa": None,
+                        "id_producto": id_producto,
+                        "descripcion": producto["nombre"],
+                        "cantidad": cantidad_decimal,
+                        "precio_unitario": precio_unitario,
+                        "subtotal": subtotal_producto,
+                        "stock_anterior": stock_actual
+                    })
+
+                    subtotal += subtotal_producto
+
+                subtotal = subtotal.quantize(
+                    cls.DOS_DECIMALES,
+                    rounding=ROUND_HALF_UP
+                )
+
+                # ======================================
+                # 3. CALCULAR TOTALES
+                # ======================================
+
+                descuento = cls.convertir_decimal(
+                    data.get(
+                        "descuento",
+                        "0.00"
+                    )
+                )
+
+                impuestos = cls.convertir_decimal(
+                    data.get(
+                        "impuestos",
+                        "0.00"
+                    )
+                )
+
+                if descuento is None or descuento < 0:
+                    raise ValueError(
+                        "El descuento no es válido."
+                    )
+
+                if impuestos is None or impuestos < 0:
+                    raise ValueError(
+                        "El importe de impuestos no es válido."
+                    )
+
+                if descuento > subtotal:
+                    raise ValueError(
+                        "El descuento no puede superar "
+                        "el subtotal de la venta."
+                    )
+
+                total = (
+                    subtotal
+                    - descuento
+                    + impuestos
+                ).quantize(
+                    cls.DOS_DECIMALES,
+                    rounding=ROUND_HALF_UP
+                )
+
+                if total <= 0:
+                    raise ValueError(
+                        "El total de la venta debe ser "
+                        "mayor que cero."
+                    )
+
+                # ======================================
+                # 4. VALIDAR PAGOS
+                # ======================================
+
+                pagos = data.get(
+                    "pagos",
+                    []
+                )
+
+                if (
+                    not isinstance(pagos, list)
+                    or not pagos
+                ):
+                    raise ValueError(
+                        "Debes registrar al menos un pago."
+                    )
+
+                pagos_normalizados = []
+                total_pagado = Decimal("0.00")
+
+                for pago in pagos:
+
+                    metodo = str(
+                        pago.get(
+                            "metodo",
+                            ""
+                        )
+                    ).strip()
+
+                    if metodo not in cls.METODOS_PAGO_VALIDOS:
+                        raise ValueError(
+                            "Uno de los métodos de pago "
+                            "no es válido."
+                        )
+
+                    monto = cls.convertir_decimal(
+                        pago.get("monto")
+                    )
+
+                    if monto is None or monto <= 0:
+                        raise ValueError(
+                            "El monto de uno de los pagos "
+                            "no es válido."
+                        )
+
+                    referencia = (
+                        str(
+                            pago.get(
+                                "referencia",
+                                ""
+                            )
+                        ).strip()
+                        or None
+                    )
+
+                    pagos_normalizados.append({
+                        "metodo": metodo,
+                        "monto": monto,
+                        "referencia": referencia
+                    })
+
+                    total_pagado += monto
+
+                total_pagado = total_pagado.quantize(
+                    cls.DOS_DECIMALES,
+                    rounding=ROUND_HALF_UP
+                )
+
+                if total_pagado < total:
+                    raise ValueError(
+                        "El total pagado es menor que "
+                        "el total de la venta."
+                    )
+
+                cambio = (
+                    total_pagado - total
+                ).quantize(
+                    cls.DOS_DECIMALES,
+                    rounding=ROUND_HALF_UP
+                )
+
+                tiene_efectivo = any(
+                    pago["metodo"] == "efectivo"
+                    for pago in pagos_normalizados
+                )
+
+                if cambio > 0 and not tiene_efectivo:
+                    raise ValueError(
+                        "Solo un pago en efectivo puede "
+                        "generar cambio."
+                    )
+
+                # ======================================
+                # 5. CREAR VENTA
+                # ======================================
+
+                query = """
+                    INSERT INTO ventas (
+                        folio,
+                        tipo_venta,
+                        id_orden,
+                        id_cliente,
+                        nombre_cliente_rapido,
+                        id_mascota,
+                        id_usuario,
+                        subtotal,
+                        descuento,
+                        impuestos,
+                        total,
+                        estado
+                    )
+                    VALUES (
+                        NULL,
+                        'rapida',
+                        NULL,
+                        %(id_cliente)s,
+                        %(nombre_cliente_rapido)s,
+                        NULL,
+                        %(id_usuario)s,
+                        %(subtotal)s,
+                        %(descuento)s,
+                        %(impuestos)s,
+                        %(total)s,
+                        'completada'
+                    );
+                """
+
+                cursor.execute(
+                    query,
+                    {
+                        "id_cliente": id_cliente,
+                        "nombre_cliente_rapido": (
+                            nombre_cliente_rapido
+                        ),
+                        "id_usuario": data[
+                            "id_usuario"
+                        ],
+                        "subtotal": subtotal,
+                        "descuento": descuento,
+                        "impuestos": impuestos,
+                        "total": total
+                    }
+                )
+
+                id_venta = cursor.lastrowid
+                folio = f"V-{id_venta:06d}"
+
+                query = """
+                    UPDATE ventas
+                    SET folio = %(folio)s
+                    WHERE id_venta = %(id_venta)s;
+                """
+
+                cursor.execute(
+                    query,
+                    {
+                        "folio": folio,
+                        "id_venta": id_venta
+                    }
+                )
+
+                # ======================================
+                # 6. CREAR DETALLES
+                # ======================================
+
+                query_detalle = """
+                    INSERT INTO venta_detalles (
+                        id_venta,
+                        tipo,
+                        id_servicio,
+                        id_tarifa,
+                        id_producto,
+                        descripcion,
+                        cantidad,
+                        precio_unitario,
+                        subtotal
+                    )
+                    VALUES (
+                        %(id_venta)s,
+                        'producto',
+                        NULL,
+                        NULL,
+                        %(id_producto)s,
+                        %(descripcion)s,
+                        %(cantidad)s,
+                        %(precio_unitario)s,
+                        %(subtotal)s
+                    );
+                """
+
+                for detalle in detalles:
+                    cursor.execute(
+                        query_detalle,
+                        {
+                            "id_venta": id_venta,
+                            "id_producto": detalle[
+                                "id_producto"
+                            ],
+                            "descripcion": detalle[
+                                "descripcion"
+                            ],
+                            "cantidad": detalle[
+                                "cantidad"
+                            ],
+                            "precio_unitario": detalle[
+                                "precio_unitario"
+                            ],
+                            "subtotal": detalle[
+                                "subtotal"
+                            ]
+                        }
+                    )
+
+                # ======================================
+                # 7. CREAR PAGOS
+                # ======================================
+
+                query_pago = """
+                    INSERT INTO pagos (
+                        id_venta,
+                        metodo,
+                        monto,
+                        referencia
+                    )
+                    VALUES (
+                        %(id_venta)s,
+                        %(metodo)s,
+                        %(monto)s,
+                        %(referencia)s
+                    );
+                """
+
+                for pago in pagos_normalizados:
+                    cursor.execute(
+                        query_pago,
+                        {
+                            "id_venta": id_venta,
+                            "metodo": pago["metodo"],
+                            "monto": pago["monto"],
+                            "referencia": pago[
+                                "referencia"
+                            ]
+                        }
+                    )
+
+                # ======================================
+                # 8. DESCONTAR INVENTARIO
+                # ======================================
+
+                for detalle in detalles:
+
+                    id_producto = detalle[
+                        "id_producto"
+                    ]
+
+                    cantidad = int(
+                        detalle["cantidad"]
+                    )
+
+                    stock_anterior = detalle[
+                        "stock_anterior"
+                    ]
+
+                    stock_nuevo = (
+                        stock_anterior - cantidad
+                    )
+
+                    query = """
+                        UPDATE productos
+                        SET stock_actual = %(stock_nuevo)s
+                        WHERE id_producto = %(id_producto)s
+                        AND stock_actual = %(stock_anterior)s;
+                    """
+
+                    cursor.execute(
+                        query,
+                        {
+                            "stock_nuevo": stock_nuevo,
+                            "id_producto": id_producto,
+                            "stock_anterior": (
+                                stock_anterior
+                            )
+                        }
+                    )
+
+                    if cursor.rowcount != 1:
+                        raise ValueError(
+                            f"No fue posible descontar "
+                            f"el stock de "
+                            f"{detalle['descripcion']}."
+                        )
+
+                    # ==================================
+                    # MOVIMIENTO DE INVENTARIO
+                    # ==================================
+
+                    query = """
+                        INSERT INTO inventario_movimientos (
+                            id_producto,
+                            id_usuario,
+                            tipo_movimiento,
+                            cantidad,
+                            motivo,
+                            id_orden,
+                            id_venta,
+                            observaciones
+                        )
+                        VALUES (
+                            %(id_producto)s,
+                            %(id_usuario)s,
+                            'salida',
+                            %(cantidad)s,
+                            'Venta rápida',
+                            NULL,
+                            %(id_venta)s,
+                            %(observaciones)s
+                        );
+                    """
+
+                    cursor.execute(
+                        query,
+                        {
+                            "id_producto": id_producto,
+                            "id_usuario": data[
+                                "id_usuario"
+                            ],
+                            "cantidad": cantidad,
+                            "id_venta": id_venta,
+                            "observaciones": (
+                                f"Salida por venta rápida "
+                                f"{folio}. "
+                                f"Stock anterior: "
+                                f"{stock_anterior}. "
+                                f"Stock nuevo: "
+                                f"{stock_nuevo}."
+                            )
+                        }
+                    )
+
+            conexion.commit()
+
+            return {
+                "exito": True,
+                "id_venta": id_venta,
+                "folio": folio,
+                "subtotal": subtotal,
+                "descuento": descuento,
+                "impuestos": impuestos,
+                "total": total,
+                "total_pagado": total_pagado,
+                "cambio": cambio
+            }
+
+        except Exception as error:
+            conexion.rollback()
+
+            print(
+                "Error al registrar venta rápida:",
+                error
+            )
+
+            return {
+                "exito": False,
+                "mensaje": str(error)
+            }
+
+        finally:
+            conexion.close()

@@ -1,4 +1,5 @@
 from flask import flash, redirect, render_template, request, session
+from app_flask.utilidades.decoradores import admin_requerido
 
 from app_flask import app
 from app_flask.modelos.modelo_inventario import MovimientoInventario
@@ -10,6 +11,7 @@ def usuario_autenticado():
 
 
 @app.route("/inventario")
+@admin_requerido
 def listar_inventario():
     if not usuario_autenticado():
         return redirect("/login")
@@ -28,6 +30,7 @@ def listar_inventario():
 
 
 @app.route("/inventario/movimiento")
+@admin_requerido
 def formulario_movimiento():
     if not usuario_autenticado():
         return redirect("/login")
@@ -49,6 +52,7 @@ def formulario_movimiento():
 
 
 @app.route("/inventario/movimiento/crear", methods=["POST"])
+@admin_requerido
 def crear_movimiento():
     if not usuario_autenticado():
         return redirect("/login")

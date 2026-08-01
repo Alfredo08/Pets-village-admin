@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Nuevo usuario | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Administración</p>
+
+      <h1 class="page-title">Nuevo usuario</h1>
+
+      <p class="page-description">Registra un usuario y configura sus permisos.</p>
+    </div>
+
+    <a href="/usuarios" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  <form action="/usuarios/crear" method="POST">
+    <section class="panel">
+      {% include 'usuarios/_formulario.html' %}
+    </section>
+  </form>
+{% endblock %}

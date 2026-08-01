@@ -20,6 +20,10 @@ from app_flask.modelos.modelo_usuario import Usuario
 
 from datetime import date, timedelta
 
+####################################################
+# AGENDA
+####################################################
+
 @app.route("/agenda")
 def agenda():
 
@@ -39,9 +43,9 @@ def agenda():
 
     estilistas = Usuario.obtener_estilistas() or []
 
-    # ==========================
-    # Construir índice de agenda
-    # ==========================
+    # ==========================================
+    # Construir índice de la agenda
+    # ==========================================
 
     agenda = {}
 
@@ -49,7 +53,7 @@ def agenda():
 
         hora = orden["hora_inicio"]
 
-        # TIME en MySQL puede llegar como timedelta
+        # MySQL TIME puede llegar como timedelta
         if isinstance(hora, timedelta):
 
             segundos = int(
@@ -62,21 +66,46 @@ def agenda():
                 segundos % 3600
             ) // 60
 
-            hora = f"{horas:02d}:{minutos:02d}"
+            hora_normalizada = (
+                f"{horas:02d}:{minutos:02d}"
+            )
 
         elif hasattr(hora, "strftime"):
 
-            hora = hora.strftime("%H:%M")
+            hora_normalizada = (
+                hora.strftime("%H:%M")
+            )
 
         else:
 
-            hora = str(hora)[:5]
+            hora_normalizada = str(hora)[:5]
 
-        llave = (
-            f"{hora}_{orden['id_usuario']}"
+        duracion = int(
+            orden.get(
+                "duracion_minutos",
+                60
+            )
         )
 
-        # Cada celda contiene una lista de órdenes.
+        # Cada bloque representa 30 minutos.
+        bloques_agenda = max(
+            1,
+            duracion // 30
+        )
+
+        orden["hora_normalizada"] = (
+            hora_normalizada
+        )
+
+        orden["bloques_agenda"] = (
+            bloques_agenda
+        )
+
+        llave = (
+            f"{hora_normalizada}_"
+            f"{orden['id_usuario']}"
+        )
+
         if llave not in agenda:
             agenda[llave] = []
 

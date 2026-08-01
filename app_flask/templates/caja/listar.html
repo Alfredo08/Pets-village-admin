@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Caja | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Resumen de ventas</p>
+
+      <h1 class="page-title">Caja</h1>
+
+      <p class="page-description">Consulta las ventas y formas de pago registradas por día.</p>
+    </div>
+
+    <form action="/caja" method="GET" class="cash-date-filter">
+      <div>
+        <label for="fecha" class="form-label">Fecha</label>
+
+        <input type="date" id="fecha" name="fecha" class="form-control" value="{{ fecha_seleccionada }}" onchange="this.form.submit()" />
+      </div>
+    </form>
+  </div>
+
+  <!--  =====================================
+     INDICADORES PRINCIPALES
+======================================  -->
+
+  <div class="cash-summary-grid">
+    <article class="cash-summary-card cash-summary-card--primary">
+      <span class="cash-summary-card__icon">💰</span>
+
+      <div>
+        <span>Total vendido</span>
+
+        <strong>${{ '{:,.2f}'.format(resumen.total_vendido) }}</strong>
+
+        <small>
+          {{ resumen.cantidad_ventas }}
+
+          {% if resumen.cantidad_ventas == 1 %}
+            venta completada
+          {% else %}
+            ventas completadas
+          {% endif %}
+        </small>
+      </div>
+    </article>
+
+    <article class="cash-summary-card">
+      <span class="cash-summary-card__icon">💵</span>
+
+      <div>
+        <span>Efectivo</span>
+
+        <strong>${{ '{:,.2f}'.format(metodos_pago.efectivo.total) }}</strong>
+
+        <small>
+          {{ metodos_pago.efectivo.cantidad_ventas }}
+          operaciones
+        </small>
+      </div>
+    </article>
+
+    <article class="cash-summary-card">
+      <span class="cash-summary-card__icon">💳</span>
+
+      <div>
+        <span>Tarjeta</span>
+
+        <strong>${{ '{:,.2f}'.format(metodos_pago.tarjeta.total) }}</strong>
+
+        <small>
+          {{ metodos_pago.tarjeta.cantidad_ventas }}
+          operaciones
+        </small>
+      </div>
+    </article>
+
+    <article class="cash-summary-card">
+      <span class="cash-summary-card__icon">🏦</span>
+
+      <div>
+        <span>Transferencia</span>
+
+        <strong>${{ '{:,.2f}'.format(metodos_pago.transferencia.total) }}</strong>
+
+        <small>
+          {{ metodos_pago.transferencia.cantidad_ventas }}
+          operaciones
+        </small>
+      </div>
+    </article>
+  </div>
+
+  <!--  =====================================
+     SERVICIOS Y PRODUCTOS
+======================================  -->
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <section class="panel cash-concept-card">
+        <div class="cash-concept-card__icon">✂️</div>
+
+        <div>
+          <span>Servicios vendidos</span>
+
+          <strong>${{ '{:,.2f}'.format(tipos_venta.servicio.total) }}</strong>
+
+          <small>
+            {{ tipos_venta.servicio.cantidad }}
+            servicios
+          </small>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <section class="panel cash-concept-card">
+        <div class="cash-concept-card__icon">📦</div>
+
+        <div>
+          <span>Productos vendidos</span>
+
+          <strong>${{ '{:,.2f}'.format(tipos_venta.producto.total) }}</strong>
+
+          <small>
+            {{ tipos_venta.producto.cantidad }}
+            unidades
+          </small>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!--  =====================================
+     LISTADO DE VENTAS
+======================================  -->
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Movimientos del día</h2>
+
+        <p class="panel-description">Ventas registradas durante la fecha seleccionada.</p>
+      </div>
+    </div>
+
+    {% if ventas %}
+      <div class="table-responsive">
+        <table class="table align-middle cash-sales-table">
+          <thead>
+            <tr>
+              <th>Hora</th>
+
+              <th>Venta</th>
+
+              <th>Tipo</th>
+
+              <th>Cliente / mascota</th>
+
+              <th>Método</th>
+
+              <th>Registró</th>
+
+              <th class="text-end">Total</th>
+
+              <th class="text-end">Acción</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for venta in ventas %}
+              <tr>
+                <!-- HORA -->
+
+                <td>
+                  {% if venta.fecha_creacion %}
+                    {{ venta.fecha_creacion.strftime('%H:%M') }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+
+                <!-- VENTA Y ORDEN -->
+
+                <td>
+                  <strong>{{ venta.folio }}</strong>
+
+                  <small class="d-block text-muted">
+                    {% if venta.folio_orden %}
+                      {{ venta.folio_orden }}
+                    {% else %}
+                      Sin orden de servicio
+                    {% endif %}
+                  </small>
+                </td>
+
+                <!-- TIPO DE VENTA -->
+
+                <td>
+                  {% if venta.tipo_venta == 'rapida' %}
+                    <span class="status-badge status-badge--info">Venta rápida</span>
+                  {% else %}
+                    <span class="status-badge status-badge--success">Servicio</span>
+                  {% endif %}
+                </td>
+
+                <!-- CLIENTE Y MASCOTA -->
+
+                <td>
+                  <strong>{{ venta.nombre_cliente or 'Público general' }}</strong>
+
+                  <small class="d-block text-muted">
+                    {% if venta.nombre_mascota %}
+                      {{ venta.nombre_mascota }}
+                    {% elif venta.tipo_venta == 'rapida' %}
+                      Solo productos
+                    {% else %}
+                      Sin mascota
+                    {% endif %}
+                  </small>
+                </td>
+
+                <!-- MÉTODO DE PAGO -->
+
+                <td>
+                  <span class="cash-payment-method">{{ venta.metodos_pago or 'Sin información' }}</span>
+                </td>
+
+                <!-- USUARIO -->
+
+                <td>{{ venta.nombre_usuario or 'Sin información' }}</td>
+
+                <!-- TOTAL -->
+
+                <td class="text-end">
+                  <strong>${{ '{:,.2f}'.format(venta.total) }}</strong>
+                </td>
+
+                <!-- ACCIÓN -->
+
+                <td class="text-end">
+                  <a href="/ventas/{{ venta.id_venta }}" class="btn btn-sm btn-outline-secondary">Ver ticket</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state__icon">💵</div>
+
+        <h3>No hay ventas registradas</h3>
+
+        <p>Las ventas cobradas desde el Punto de Venta aparecerán en este resumen.</p>
+
+        <a href="/pos?fecha={{ fecha_seleccionada }}" class="btn btn-pets">Ir al Punto de Venta</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

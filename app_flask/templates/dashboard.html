@@ -1,125 +1,682 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block titulo %}
-  Dashboard | PetsVillage
+Dashboard | PetsVillage
 {% endblock %}
 
 {% block contenido %}
-  <div class="page-header">
+
+<div class="page-header">
+
     <div>
-      <p class="page-eyebrow">Resumen general</p>
-      <h1 class="page-title">Dashboard</h1>
-      <p class="page-description">Bienvenido, {{ session.nombre }}. Este es el resumen de PetsVillage.</p>
+        <p class="page-eyebrow">
+            Resumen operativo
+        </p>
+
+        <h1 class="page-title">
+            Dashboard
+        </h1>
+
+        <p class="page-description">
+            Estado general de la operación de hoy.
+        </p>
     </div>
 
-    <a href="/ventas" class="btn btn-pets">Nueva venta</a>
-  </div>
+    <div class="dashboard-header-actions">
 
-  <div class="row g-4">
-    <div class="col-12 col-md-6 col-xl-3">
-      <article class="stat-card">
-        <div class="stat-card__header">
-          <span class="stat-card__icon">📅</span>
-        </div>
+        <a
+            href="/agenda/nueva?fecha={{ fecha_actual }}"
+            class="btn btn-outline-secondary"
+        >
+            + Nueva orden
+        </a>
 
-        <p class="stat-card__label">Citas de hoy</p>
-        <p class="stat-card__value">0</p>
-        <small class="stat-card__help">Servicios programados</small>
-      </article>
+        <a
+            href="/pos?fecha={{ fecha_actual }}"
+            class="btn btn-pets"
+        >
+            Abrir Punto de Venta
+        </a>
+
     </div>
 
-    <div class="col-12 col-md-6 col-xl-3">
-      <article class="stat-card">
-        <div class="stat-card__header">
-          <span class="stat-card__icon">💰</span>
+</div>
+
+
+<!-- =====================================
+     INDICADORES PRINCIPALES
+====================================== -->
+
+<div class="dashboard-stats">
+
+    <article class="dashboard-stat-card dashboard-stat-card--primary">
+
+        <div class="dashboard-stat-card__icon">
+            💰
         </div>
 
-        <p class="stat-card__label">Ventas de hoy</p>
-        <p class="stat-card__value">$0.00</p>
-        <small class="stat-card__help">Ingresos registrados</small>
-      </article>
+        <div>
+            <span>
+                Ventas de hoy
+            </span>
+
+            <strong>
+                ${{
+                    "{:,.2f}".format(
+                        resumen.total_vendido
+                    )
+                }}
+            </strong>
+
+            <small>
+                {{ resumen.cantidad_ventas }}
+
+                {% if resumen.cantidad_ventas == 1 %}
+                    venta completada
+                {% else %}
+                    ventas completadas
+                {% endif %}
+            </small>
+        </div>
+
+    </article>
+
+
+    <article class="dashboard-stat-card">
+
+        <div class="dashboard-stat-card__icon">
+            📅
+        </div>
+
+        <div>
+            <span>
+                Citas de hoy
+            </span>
+
+            <strong>
+                {{ resumen.citas_programadas }}
+            </strong>
+
+            <small>
+                Órdenes programadas
+            </small>
+        </div>
+
+    </article>
+
+
+    <article class="dashboard-stat-card">
+
+        <div class="dashboard-stat-card__icon">
+            ⏳
+        </div>
+
+        <div>
+            <span>
+                Pendientes
+            </span>
+
+            <strong>
+                {{ resumen.ordenes_pendientes }}
+            </strong>
+
+            <small>
+                Esperando confirmación
+            </small>
+        </div>
+
+    </article>
+
+
+    <article class="dashboard-stat-card">
+
+        <div class="dashboard-stat-card__icon">
+            ✂️
+        </div>
+
+        <div>
+            <span>
+                En proceso
+            </span>
+
+            <strong>
+                {{ resumen.ordenes_en_proceso }}
+            </strong>
+
+            <small>
+                Servicios activos
+            </small>
+        </div>
+
+    </article>
+
+</div>
+
+
+<!-- =====================================
+     ESTADO DE ÓRDENES
+====================================== -->
+
+<section class="panel">
+
+    <div class="panel-header">
+
+        <div>
+            <h2 class="panel-title">
+                Estado de las órdenes de hoy
+            </h2>
+
+            <p class="panel-description">
+                Distribución actual de las citas programadas.
+            </p>
+        </div>
+
+        <a
+            href="/agenda?fecha={{ fecha_actual }}"
+            class="btn btn-sm btn-outline-secondary"
+        >
+            Ver agenda
+        </a>
+
     </div>
 
-    <div class="col-12 col-md-6 col-xl-3">
-      <article class="stat-card">
-        <div class="stat-card__header">
-          <span class="stat-card__icon">🐾</span>
+    <div class="dashboard-order-status">
+
+        <div>
+            <span class="dashboard-order-status__dot dashboard-order-status__dot--pending"></span>
+
+            <div>
+                <strong>
+                    {{ resumen.ordenes_pendientes }}
+                </strong>
+
+                <small>
+                    Pendientes
+                </small>
+            </div>
         </div>
 
-        <p class="stat-card__label">Mascotas atendidas</p>
-        <p class="stat-card__value">0</p>
-        <small class="stat-card__help">Atenciones del día</small>
-      </article>
+        <div>
+            <span class="dashboard-order-status__dot dashboard-order-status__dot--confirmed"></span>
+
+            <div>
+                <strong>
+                    {{ resumen.ordenes_confirmadas }}
+                </strong>
+
+                <small>
+                    Confirmadas
+                </small>
+            </div>
+        </div>
+
+        <div>
+            <span class="dashboard-order-status__dot dashboard-order-status__dot--progress"></span>
+
+            <div>
+                <strong>
+                    {{ resumen.ordenes_en_proceso }}
+                </strong>
+
+                <small>
+                    En proceso
+                </small>
+            </div>
+        </div>
+
+        <div>
+            <span class="dashboard-order-status__dot dashboard-order-status__dot--completed"></span>
+
+            <div>
+                <strong>
+                    {{ resumen.ordenes_finalizadas }}
+                </strong>
+
+                <small>
+                    Finalizadas
+                </small>
+            </div>
+        </div>
+
     </div>
 
-    <div class="col-12 col-md-6 col-xl-3">
-      <article class="stat-card">
-        <div class="stat-card__header">
-          <span class="stat-card__icon">📦</span>
-        </div>
+</section>
 
-        <p class="stat-card__label">Stock bajo</p>
-        <p class="stat-card__value">0</p>
-        <small class="stat-card__help">Productos por revisar</small>
-      </article>
+
+<div class="row g-4">
+
+    <!-- =====================================
+         PRÓXIMAS CITAS
+    ====================================== -->
+
+    <div class="col-12 col-xl-7">
+
+        <section class="panel h-100">
+
+            <div class="panel-header">
+
+                <div>
+                    <h2 class="panel-title">
+                        Próximas citas
+                    </h2>
+
+                    <p class="panel-description">
+                        Atenciones activas programadas para hoy.
+                    </p>
+                </div>
+
+                <a
+                    href="/agenda?fecha={{ fecha_actual }}"
+                    class="btn btn-sm btn-outline-secondary"
+                >
+                    Ver todas
+                </a>
+
+            </div>
+
+
+            {% if proximas_citas %}
+
+                <div class="dashboard-appointments">
+
+                    {% for cita in proximas_citas %}
+
+                        <a
+                            href="/agenda/orden/{{ cita.id_orden }}"
+                            class="dashboard-appointment"
+                        >
+
+                            <div
+                                class="dashboard-appointment__time"
+                                {% if cita.color_agenda %}
+                                    style="
+                                        border-color:
+                                        {{ cita.color_agenda }};
+                                    "
+                                {% endif %}
+                            >
+                                {{ cita.hora_inicio }}
+                            </div>
+
+                            <div class="dashboard-appointment__content">
+
+                                <div class="dashboard-appointment__heading">
+
+                                    <div>
+                                        <strong>
+                                            {{ cita.nombre_mascota }}
+                                        </strong>
+
+                                        <small>
+                                            {{ cita.nombre_cliente }}
+                                        </small>
+                                    </div>
+
+                                    {% if cita.estado == "pendiente" %}
+
+                                        <span class="status-badge status-badge--warning">
+                                            Pendiente
+                                        </span>
+
+                                    {% elif cita.estado == "confirmada" %}
+
+                                        <span class="status-badge status-badge--success">
+                                            Confirmada
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="status-badge status-badge--info">
+                                            En proceso
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+                                <div class="dashboard-appointment__meta">
+                                    <span>
+                                        {{ cita.nombre_servicio }}
+                                    </span>
+
+                                    <span>
+                                        {{ cita.nombre_estilista }}
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <div class="empty-state__icon">
+                        📅
+                    </div>
+
+                    <h3>
+                        No hay citas activas
+                    </h3>
+
+                    <p>
+                        Las órdenes pendientes, confirmadas o en proceso
+                        aparecerán aquí.
+                    </p>
+
+                    <a
+                        href="/agenda/nueva?fecha={{ fecha_actual }}"
+                        class="btn btn-pets"
+                    >
+                        Crear orden
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
     </div>
-  </div>
 
-  <div class="row g-4 mt-1">
-    <div class="col-12 col-xl-8">
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title">Próximas citas</h2>
-            <p class="panel-description">Servicios programados para hoy.</p>
-          </div>
 
-          <a href="/agenda" class="panel-link">Ver agenda</a>
+    <!-- =====================================
+         INVENTARIO BAJO
+    ====================================== -->
+
+    <div class="col-12 col-xl-5">
+
+        <section class="panel h-100">
+
+            <div class="panel-header">
+
+                <div>
+                    <h2 class="panel-title">
+                        Inventario bajo
+                    </h2>
+
+                    <p class="panel-description">
+                        Productos que requieren atención.
+                    </p>
+                </div>
+
+                {% if session.get("rol") == "admin" %}
+
+                    <a
+                        href="/inventario"
+                        class="btn btn-sm btn-outline-secondary"
+                    >
+                        Ver inventario
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if productos_stock_bajo %}
+
+                <div class="dashboard-stock-list">
+
+                    {% for producto in productos_stock_bajo %}
+
+                        <a
+                            href="/productos/{{ producto.id_producto }}/editar"
+                            class="dashboard-stock-item"
+                        >
+
+                            <div>
+
+                                <strong>
+                                    {{ producto.nombre }}
+                                </strong>
+
+                                <small>
+                                    {{
+                                        producto.nombre_categoria
+                                        or "Sin categoría"
+                                    }}
+                                </small>
+
+                            </div>
+
+                            <div class="dashboard-stock-item__quantity">
+
+                                <strong>
+                                    {{ producto.stock_actual }}
+                                </strong>
+
+                                <small>
+                                    Mínimo:
+                                    {{ producto.stock_minimo }}
+                                </small>
+
+                            </div>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <div class="empty-state__icon">
+                        ✅
+                    </div>
+
+                    <h3>
+                        Inventario saludable
+                    </h3>
+
+                    <p>
+                        Ningún producto se encuentra por debajo
+                        de su existencia mínima.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================
+     VENTAS RECIENTES
+====================================== -->
+
+<section class="panel">
+
+    <div class="panel-header">
+
+        <div>
+            <h2 class="panel-title">
+                Ventas recientes
+            </h2>
+
+            <p class="panel-description">
+                Últimas operaciones registradas en el Punto de Venta.
+            </p>
         </div>
+
+        <a
+            href="/caja"
+            class="btn btn-sm btn-outline-secondary"
+        >
+            Ver caja
+        </a>
+
+    </div>
+
+
+    {% if ventas_recientes %}
+
+        <div class="table-responsive">
+
+            <table class="table align-middle dashboard-sales-table">
+
+                <thead>
+                    <tr>
+                        <th>
+                            Venta
+                        </th>
+
+                        <th>
+                            Cliente
+                        </th>
+
+                        <th>
+                            Mascota
+                        </th>
+
+                        <th>
+                            Pago
+                        </th>
+
+                        <th>
+                            Fecha
+                        </th>
+
+                        <th class="text-end">
+                            Total
+                        </th>
+
+                        <th class="text-end">
+                            Acción
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for venta in ventas_recientes %}
+
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    {{ venta.folio }}
+                                </strong>
+
+                                <small class="d-block text-muted">
+
+                                    {% if venta.tipo_venta == "rapida" %}
+                                        Venta rápida
+                                    {% else %}
+                                        Servicio
+                                    {% endif %}
+
+                                </small>
+
+                            </td>
+
+                            <td>
+                                {{ venta.nombre_cliente }}
+                            </td>
+
+                            <td>
+
+                                {% if venta.nombre_mascota %}
+
+                                    {{ venta.nombre_mascota }}
+
+                                {% elif venta.tipo_venta == "rapida" %}
+
+                                    <span class="text-muted">
+                                        Solo productos
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        Sin mascota
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                <span class="cash-payment-method">
+                                    {{
+                                        venta.metodos_pago
+                                        or "Sin información"
+                                    }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {{
+                                    venta.fecha_creacion
+                                    .strftime(
+                                        "%d/%m/%Y %H:%M"
+                                    )
+                                }}
+                            </td>
+
+                            <td class="text-end">
+                                <strong>
+                                    ${{
+                                        "{:,.2f}".format(
+                                            venta.total
+                                        )
+                                    }}
+                                </strong>
+                            </td>
+
+                            <td class="text-end">
+
+                                <a
+                                    href="/ventas/{{ venta.id_venta }}"
+                                    class="btn btn-sm btn-outline-secondary"
+                                >
+                                    Ver ticket
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
 
         <div class="empty-state">
-          <div class="empty-state__icon">📅</div>
-          <h3>No hay citas registradas</h3>
-          <p>Las próximas citas aparecerán en esta sección.</p>
-        </div>
-      </section>
-    </div>
 
-    <div class="col-12 col-xl-4">
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title">Accesos rápidos</h2>
-            <p class="panel-description">Operaciones frecuentes.</p>
-          </div>
-        </div>
-
-        <div class="quick-actions">
-          <a href="/ventas" class="quick-action">
-            <span>🛒</span>
-            <div>
-              <strong>Nueva venta</strong>
-              <small>Productos y servicios</small>
+            <div class="empty-state__icon">
+                🧾
             </div>
-          </a>
 
-          <a href="/clientes" class="quick-action">
-            <span>👤</span>
-            <div>
-              <strong>Nuevo cliente</strong>
-              <small>Registrar propietario</small>
-            </div>
-          </a>
+            <h3>
+                No hay ventas registradas
+            </h3>
 
-          <a href="/productos" class="quick-action">
-            <span>📦</span>
-            <div>
-              <strong>Agregar producto</strong>
-              <small>Registrar inventario</small>
-            </div>
-          </a>
+            <p>
+                Las operaciones completadas aparecerán aquí.
+            </p>
+
         </div>
-      </section>
-    </div>
-  </div>
+
+    {% endif %}
+
+</section>
+
 {% endblock %}

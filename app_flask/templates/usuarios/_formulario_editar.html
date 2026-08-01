@@ -1,0 +1,260 @@
+<div class="row g-4">
+
+    <div class="col-12 col-lg-6">
+
+        <label
+            for="nombre"
+            class="form-label"
+        >
+            Nombre completo *
+        </label>
+
+        <input
+            type="text"
+            id="nombre"
+            name="nombre"
+            class="form-control"
+            value="{{ datos.get('nombre', '') }}"
+            minlength="2"
+            maxlength="100"
+            required
+        >
+
+    </div>
+
+
+    <div class="col-12 col-lg-6">
+
+        <label
+            for="correo"
+            class="form-label"
+        >
+            Correo electrónico *
+        </label>
+
+        <input
+            type="email"
+            id="correo"
+            name="correo"
+            class="form-control"
+            value="{{ datos.get('correo', '') }}"
+            maxlength="150"
+            required
+        >
+
+    </div>
+
+
+    <div class="col-12 col-lg-4">
+
+        <label
+            for="rol"
+            class="form-label"
+        >
+            Rol *
+        </label>
+
+        <select
+            id="rol"
+            name="rol"
+            class="form-select"
+            required
+        >
+
+            <option value="admin"
+                {% if datos.get("rol") == "admin" %}
+                    selected
+                {% endif %}
+            >
+                Administrador
+            </option>
+
+            <option value="recepcion"
+                {% if datos.get("rol") == "recepcion" %}
+                    selected
+                {% endif %}
+            >
+                Recepción
+            </option>
+
+            <option value="estilista"
+                {% if datos.get("rol") == "estilista" %}
+                    selected
+                {% endif %}
+            >
+                Estilista
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="col-12 col-lg-8 d-flex align-items-end">
+
+        <div class="form-check user-stylist-check w-100">
+
+            <input
+                type="checkbox"
+                id="es_estilista"
+                name="es_estilista"
+                value="1"
+                class="form-check-input"
+                {% if
+                    datos.get("es_estilista") in [
+                        1,
+                        "1",
+                        true
+                    ]
+                    or datos.get("rol") == "estilista"
+                %}
+                    checked
+                {% endif %}
+            >
+
+            <label
+                for="es_estilista"
+                class="form-check-label"
+            >
+                Mostrar este usuario como estilista en la agenda
+            </label>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="configuracion_estilista"
+        class="col-12"
+    >
+
+        <div class="user-stylist-settings">
+
+            <div>
+
+                <label
+                    for="color_agenda"
+                    class="form-label"
+                >
+                    Color de agenda
+                </label>
+
+                <input
+                    type="color"
+                    id="color_agenda"
+                    name="color_agenda"
+                    class="form-control form-control-color"
+                    value="{{
+                        datos.get(
+                            'color_agenda',
+                            '#3B82F6'
+                        ) or '#3B82F6'
+                    }}"
+                >
+
+            </div>
+
+            <div>
+
+                <label
+                    for="orden_agenda"
+                    class="form-label"
+                >
+                    Orden en agenda
+                </label>
+
+                <input
+                    type="number"
+                    id="orden_agenda"
+                    name="orden_agenda"
+                    class="form-control"
+                    value="{{
+                        datos.get(
+                            'orden_agenda',
+                            1
+                        ) or 1
+                    }}"
+                    min="1"
+                    step="1"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<hr class="my-4">
+
+
+<div class="d-flex justify-content-end gap-2">
+
+    <a
+        href="/usuarios"
+        class="btn btn-outline-secondary"
+    >
+        Cancelar
+    </a>
+
+    <button
+        type="submit"
+        class="btn btn-pets"
+    >
+        Guardar cambios
+    </button>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const rol = document.getElementById("rol");
+
+    const esEstilista = document.getElementById(
+        "es_estilista"
+    );
+
+    const configuracion = document.getElementById(
+        "configuracion_estilista"
+    );
+
+    const colorAgenda = document.getElementById(
+        "color_agenda"
+    );
+
+    const ordenAgenda = document.getElementById(
+        "orden_agenda"
+    );
+
+    function actualizarConfiguracionEstilista() {
+        if (rol.value === "estilista") {
+            esEstilista.checked = true;
+        }
+
+        const mostrar = esEstilista.checked;
+
+        configuracion.hidden = !mostrar;
+        colorAgenda.disabled = !mostrar;
+        ordenAgenda.disabled = !mostrar;
+
+        colorAgenda.required = mostrar;
+        ordenAgenda.required = mostrar;
+    }
+
+    rol.addEventListener(
+        "change",
+        actualizarConfiguracionEstilista
+    );
+
+    esEstilista.addEventListener(
+        "change",
+        actualizarConfiguracionEstilista
+    );
+
+    actualizarConfiguracionEstilista();
+});
+</script>

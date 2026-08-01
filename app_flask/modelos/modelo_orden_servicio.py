@@ -679,6 +679,99 @@ class OrdenServicio:
         )
 
         return bool(resultado)
+
+    ####################################################
+    # OBTENER ÓRDENES DISPONIBLES PARA POS
+    ####################################################
+
+    @classmethod
+    def obtener_pendientes_pos(cls, fecha=None, termino=""):
+        data = {
+            "termino": f"%{termino.strip()}%"
+        }
+
+        filtro_fecha = ""
+
+        if fecha:
+            filtro_fecha = """
+                AND os.fecha = %(fecha)s
+            """
+
+            data["fecha"] = fecha
+
+        query = f"""
+            SELECT
+                os.id_orden,
+                os.folio,
+                os.id_cliente,
+                os.id_mascota,
+                os.id_servicio,
+                os.id_usuario,
+                os.fecha,
+                os.hora_inicio,
+                os.duracion_minutos,
+                os.estado,
+                os.notas,
+                os.id_venta,
+
+                c.nombre AS nombre_cliente,
+                c.telefono AS telefono_cliente,
+
+                m.nombre AS nombre_mascota,
+                m.numero_expediente,
+
+                s.nombre AS nombre_servicio,
+
+                u.nombre AS nombre_estilista,
+                u.color_agenda
+
+            FROM ordenes_servicio os
+
+            INNER JOIN clientes c
+                ON c.id_cliente = os.id_cliente
+
+            INNER JOIN mascotas m
+                ON m.id_mascota = os.id_mascota
+
+            INNER JOIN servicios s
+                ON s.id_servicio = os.id_servicio
+
+            INNER JOIN usuarios u
+                ON u.id_usuario = os.id_usuario
+
+            WHERE os.estado IN (
+                'confirmada',
+                'en_proceso'
+            )
+
+            AND os.id_venta IS NULL
+
+            AND (
+                os.folio LIKE %(termino)s
+                OR c.nombre LIKE %(termino)s
+                OR c.telefono LIKE %(termino)s
+                OR m.nombre LIKE %(termino)s
+                OR m.numero_expediente LIKE %(termino)s
+                OR s.nombre LIKE %(termino)s
+                OR u.nombre LIKE %(termino)s
+            )
+
+            {filtro_fecha}
+
+            ORDER BY
+                os.fecha ASC,
+                os.hora_inicio ASC,
+                u.nombre ASC;
+        """
+
+        resultado = connectToMySQL(
+            BASE_DATOS
+        ).query_db(
+            query,
+            data
+        )
+
+        return resultado or []
     
 from datetime import time, timedelta
 

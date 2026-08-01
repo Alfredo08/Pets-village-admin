@@ -1,0 +1,1597 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+Venta rápida | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+
+<div class="page-header">
+
+    <div>
+
+        <p class="page-eyebrow">
+            Punto de venta
+        </p>
+
+        <h1 class="page-title">
+            Venta rápida
+        </h1>
+
+        <p class="page-description">
+            Registra una venta exclusiva de productos,
+            sin orden de servicio.
+        </p>
+
+    </div>
+
+    <a
+        href="/pos"
+        class="btn btn-outline-secondary"
+    >
+        Volver al Punto de Venta
+    </a>
+
+</div>
+
+
+<div class="quick-sale-layout">
+
+    <!-- =====================================
+         CATÁLOGO DE PRODUCTOS
+    ====================================== -->
+
+    <section class="panel quick-sale-catalog">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2 class="panel-title">
+                    Productos
+                </h2>
+
+                <p class="panel-description">
+                    Busca, escanea o selecciona productos
+                    para agregarlos al carrito.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="quick-sale-search">
+
+            <label
+                for="buscar_producto"
+                class="form-label"
+            >
+                Buscar producto
+            </label>
+
+            <div class="quick-sale-search__control">
+
+                <span>
+                    🔎
+                </span>
+
+                <input
+                    type="search"
+                    id="buscar_producto"
+                    class="form-control"
+                    placeholder="Nombre, categoría o código de barras"
+                    autocomplete="off"
+                    autofocus
+                >
+
+            </div>
+
+            <small
+                id="resultado_productos"
+                class="text-muted"
+            ></small>
+
+        </div>
+
+
+        {% if productos %}
+
+            <div
+                id="catalogo_productos"
+                class="quick-sale-products"
+            >
+
+                {% for producto in productos %}
+
+                    <article
+                        class="quick-sale-product"
+                        data-id="{{ producto.id_producto }}"
+                        data-nombre="{{ producto.nombre|e }}"
+                        data-categoria="{{
+                            producto.nombre_categoria
+                            or 'Sin categoría'
+                        }}"
+                        data-codigo="{{
+                            producto.codigo_barras
+                            or ''
+                        }}"
+                        data-precio="{{ producto.precio_venta }}"
+                        data-stock="{{ producto.stock_actual }}"
+                        data-busqueda="{{
+                            (
+                                producto.nombre ~ " "
+                                ~ (
+                                    producto.nombre_categoria
+                                    or ""
+                                ) ~ " "
+                                ~ (
+                                    producto.codigo_barras
+                                    or ""
+                                )
+                            )|lower
+                        }}"
+                    >
+
+                        <div class="quick-sale-product__main">
+
+                            <span class="quick-sale-product__category">
+                                {{
+                                    producto.nombre_categoria
+                                    or "Sin categoría"
+                                }}
+                            </span>
+
+                            <h3>
+                                {{ producto.nombre }}
+                            </h3>
+
+                            {% if producto.codigo_barras %}
+
+                                <small>
+                                    Código:
+                                    {{ producto.codigo_barras }}
+                                </small>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div class="quick-sale-product__footer">
+
+                            <div>
+
+                                <strong>
+                                    ${{
+                                        "{:,.2f}".format(
+                                            producto.precio_venta
+                                        )
+                                    }}
+                                </strong>
+
+                                <small>
+                                    {{ producto.stock_actual }}
+                                    disponibles
+                                </small>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                class="
+                                    btn
+                                    btn-sm
+                                    btn-outline-secondary
+                                    boton-agregar-producto
+                                "
+                            >
+                                Agregar
+                            </button>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <div class="empty-state__icon">
+                    📦
+                </div>
+
+                <h3>
+                    No hay productos disponibles
+                </h3>
+
+                <p>
+                    Los productos deben estar activos
+                    y tener existencias mayores que cero.
+                </p>
+
+                <a
+                    href="/productos"
+                    class="btn btn-pets"
+                >
+                    Ver productos
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- =====================================
+         CARRITO
+    ====================================== -->
+
+    <aside class="panel quick-sale-cart">
+
+        <div class="quick-sale-cart__header">
+
+            <div>
+
+                <p class="page-eyebrow">
+                    Venta actual
+                </p>
+
+                <h2 class="panel-title">
+                    Carrito
+                </h2>
+
+            </div>
+
+            <span
+                id="cantidad_conceptos"
+                class="quick-sale-cart__count"
+            >
+                0 productos
+            </span>
+
+        </div>
+
+
+        <!-- =================================
+             CLIENTE OPCIONAL
+        ================================== -->
+
+        <div class="quick-sale-customer">
+
+            <label
+                for="nombre_cliente_rapido"
+                class="form-label"
+            >
+                Nombre del comprador
+            </label>
+
+            <input
+                type="text"
+                id="nombre_cliente_rapido"
+                class="form-control"
+                maxlength="120"
+                placeholder="Opcional — Público general"
+                autocomplete="off"
+            >
+
+            <small class="text-muted">
+                Déjalo vacío para registrar la venta
+                como Público general.
+            </small>
+
+        </div>
+
+
+        <div
+            id="carrito_vacio"
+            class="quick-sale-cart-empty"
+        >
+
+            <div>
+                🛒
+            </div>
+
+            <strong>
+                El carrito está vacío
+            </strong>
+
+            <p>
+                Selecciona o escanea productos
+                para comenzar la venta.
+            </p>
+
+        </div>
+
+
+        <div
+            id="lista_carrito"
+            class="quick-sale-cart-list"
+        ></div>
+
+
+        <div class="quick-sale-cart__summary">
+
+            <div>
+
+                <span>
+                    Subtotal
+                </span>
+
+                <strong id="subtotal_venta">
+                    $0.00
+                </strong>
+
+            </div>
+
+            <div class="quick-sale-cart__total">
+
+                <span>
+                    Total
+                </span>
+
+                <strong id="total_venta">
+                    $0.00
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <button
+            type="button"
+            id="boton_cobrar"
+            class="btn btn-pets btn-lg w-100"
+            disabled
+        >
+            Cobrar venta
+        </button>
+
+    </aside>
+
+</div>
+
+
+<!-- =========================================
+     MODAL DE COBRO
+========================================== -->
+
+<dialog
+    id="modal_cobro"
+    class="payment-dialog"
+>
+
+    <div class="payment-dialog__header">
+
+        <div>
+
+            <p class="page-eyebrow">
+                Finalizar venta rápida
+            </p>
+
+            <h2>
+                Registrar pago
+            </h2>
+
+        </div>
+
+        <button
+            type="button"
+            id="cerrar_modal_cobro"
+            class="payment-dialog__close"
+            aria-label="Cerrar"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <div class="payment-dialog__body">
+
+        <div class="payment-total">
+
+            <span>
+                Total a cobrar
+            </span>
+
+            <strong id="modal_total">
+                $0.00
+            </strong>
+
+        </div>
+
+
+        <div class="payment-section-header">
+
+            <div>
+
+                <h3>
+                    Pagos
+                </h3>
+
+                <p>
+                    Puedes combinar efectivo,
+                    tarjeta y transferencia.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                id="agregar_pago"
+                class="btn btn-sm btn-outline-secondary"
+            >
+                + Agregar pago
+            </button>
+
+        </div>
+
+
+        <div
+            id="lista_pagos"
+            class="payment-list"
+        ></div>
+
+
+        <div class="payment-summary">
+
+            <div>
+
+                <span>
+                    Total pagado
+                </span>
+
+                <strong id="total_pagado">
+                    $0.00
+                </strong>
+
+            </div>
+
+            <div>
+
+                <span>
+                    Restante
+                </span>
+
+                <strong id="total_restante">
+                    $0.00
+                </strong>
+
+            </div>
+
+            <div>
+
+                <span>
+                    Cambio
+                </span>
+
+                <strong id="total_cambio">
+                    $0.00
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="mensaje_cobro"
+            class="alert alert-danger d-none mt-3"
+        ></div>
+
+    </div>
+
+
+    <div class="payment-dialog__footer">
+
+        <button
+            type="button"
+            id="cancelar_cobro"
+            class="btn btn-outline-secondary"
+        >
+            Cancelar
+        </button>
+
+        <button
+            type="button"
+            id="confirmar_cobro"
+            class="btn btn-pets"
+            disabled
+        >
+            Confirmar cobro
+        </button>
+
+    </div>
+
+</dialog>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // ==========================================
+    // ELEMENTOS PRINCIPALES
+    // ==========================================
+
+    const buscadorProducto = document.getElementById(
+        "buscar_producto"
+    );
+
+    const resultadoProductos = document.getElementById(
+        "resultado_productos"
+    );
+
+    const tarjetasProductos = Array.from(
+        document.querySelectorAll(
+            ".quick-sale-product"
+        )
+    );
+
+    const listaCarrito = document.getElementById(
+        "lista_carrito"
+    );
+
+    const carritoVacio = document.getElementById(
+        "carrito_vacio"
+    );
+
+    const subtotalVentaElemento = document.getElementById(
+        "subtotal_venta"
+    );
+
+    const totalVentaElemento = document.getElementById(
+        "total_venta"
+    );
+
+    const cantidadConceptosElemento = document.getElementById(
+        "cantidad_conceptos"
+    );
+
+    const botonCobrar = document.getElementById(
+        "boton_cobrar"
+    );
+
+    const nombreClienteRapido = document.getElementById(
+        "nombre_cliente_rapido"
+    );
+
+
+    // ==========================================
+    // ELEMENTOS DEL MODAL
+    // ==========================================
+
+    const modalCobro = document.getElementById(
+        "modal_cobro"
+    );
+
+    const cerrarModalCobroBoton = document.getElementById(
+        "cerrar_modal_cobro"
+    );
+
+    const cancelarCobroBoton = document.getElementById(
+        "cancelar_cobro"
+    );
+
+    const agregarPagoBoton = document.getElementById(
+        "agregar_pago"
+    );
+
+    const listaPagos = document.getElementById(
+        "lista_pagos"
+    );
+
+    const modalTotal = document.getElementById(
+        "modal_total"
+    );
+
+    const totalPagadoElemento = document.getElementById(
+        "total_pagado"
+    );
+
+    const totalRestanteElemento = document.getElementById(
+        "total_restante"
+    );
+
+    const totalCambioElemento = document.getElementById(
+        "total_cambio"
+    );
+
+    const confirmarCobroBoton = document.getElementById(
+        "confirmar_cobro"
+    );
+
+    const mensajeCobro = document.getElementById(
+        "mensaje_cobro"
+    );
+
+
+    // ==========================================
+    // ESTADO
+    // ==========================================
+
+    const productosCarrito = new Map();
+
+    let totalVenta = 0;
+    let contadorPagos = 0;
+    let procesandoCobro = false;
+
+
+    // ==========================================
+    // UTILIDADES
+    // ==========================================
+
+    function formatoMoneda(cantidad) {
+        return new Intl.NumberFormat(
+            "es-MX",
+            {
+                style: "currency",
+                currency: "MXN"
+            }
+        ).format(
+            Number(cantidad || 0)
+        );
+    }
+
+
+    function normalizarTexto(texto) {
+        return String(texto || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .trim();
+    }
+
+
+    function escaparHtml(texto) {
+        const elemento = document.createElement(
+            "div"
+        );
+
+        elemento.textContent = String(
+            texto || ""
+        );
+
+        return elemento.innerHTML;
+    }
+
+
+    // ==========================================
+    // CATÁLOGO
+    // ==========================================
+
+    function filtrarProductos() {
+        if (!buscadorProducto) {
+            return;
+        }
+
+        const termino = normalizarTexto(
+            buscadorProducto.value
+        );
+
+        let encontrados = 0;
+
+        tarjetasProductos.forEach((tarjeta) => {
+            const textoBusqueda = normalizarTexto(
+                tarjeta.dataset.busqueda
+            );
+
+            const visible = (
+                !termino
+                || textoBusqueda.includes(
+                    termino
+                )
+            );
+
+            tarjeta.hidden = !visible;
+
+            if (visible) {
+                encontrados += 1;
+            }
+        });
+
+        if (!resultadoProductos) {
+            return;
+        }
+
+        if (!termino) {
+            resultadoProductos.textContent = "";
+            return;
+        }
+
+        resultadoProductos.textContent = (
+            encontrados === 1
+                ? "1 producto encontrado"
+                : `${encontrados} productos encontrados`
+        );
+    }
+
+
+    function buscarProductoPorCodigo(codigo) {
+        const codigoNormalizado = String(
+            codigo || ""
+        ).trim();
+
+        if (!codigoNormalizado) {
+            return null;
+        }
+
+        return tarjetasProductos.find(
+            (tarjeta) => {
+                return (
+                    String(
+                        tarjeta.dataset.codigo
+                        || ""
+                    ).trim()
+                    === codigoNormalizado
+                );
+            }
+        ) || null;
+    }
+
+
+    // ==========================================
+    // CARRITO
+    // ==========================================
+
+    function agregarProductoDesdeTarjeta(tarjeta) {
+        if (!tarjeta) {
+            return;
+        }
+
+        const id = Number(
+            tarjeta.dataset.id
+        );
+
+        const nombre = tarjeta.dataset.nombre;
+
+        const categoria = (
+            tarjeta.dataset.categoria
+            || "Sin categoría"
+        );
+
+        const codigo = (
+            tarjeta.dataset.codigo
+            || ""
+        );
+
+        const precio = Number(
+            tarjeta.dataset.precio
+        );
+
+        const stock = Number(
+            tarjeta.dataset.stock
+        );
+
+        if (
+            !Number.isInteger(id)
+            || id <= 0
+            || !Number.isFinite(precio)
+        ) {
+            return;
+        }
+
+        if (productosCarrito.has(id)) {
+            const productoExistente = (
+                productosCarrito.get(id)
+            );
+
+            if (
+                productoExistente.cantidad
+                >= stock
+            ) {
+                mostrarErrorCobro(
+                    `No hay más existencias de ${nombre}.`
+                );
+
+                return;
+            }
+
+            productoExistente.cantidad += 1;
+
+        } else {
+
+            if (stock <= 0) {
+                mostrarErrorCobro(
+                    `El producto ${nombre} no tiene existencias.`
+                );
+
+                return;
+            }
+
+            productosCarrito.set(
+                id,
+                {
+                    id,
+                    nombre,
+                    categoria,
+                    codigo,
+                    precio,
+                    stock,
+                    cantidad: 1
+                }
+            );
+        }
+
+        ocultarErrorCobro();
+        renderizarCarrito();
+    }
+
+
+    function modificarCantidad(
+        idProducto,
+        incremento
+    ) {
+        const producto = productosCarrito.get(
+            idProducto
+        );
+
+        if (!producto) {
+            return;
+        }
+
+        const nuevaCantidad = (
+            producto.cantidad + incremento
+        );
+
+        if (nuevaCantidad <= 0) {
+            productosCarrito.delete(
+                idProducto
+            );
+
+            renderizarCarrito();
+            return;
+        }
+
+        if (nuevaCantidad > producto.stock) {
+            mostrarErrorCobro(
+                `Solo hay ${producto.stock} unidades disponibles de ${producto.nombre}.`
+            );
+
+            return;
+        }
+
+        producto.cantidad = nuevaCantidad;
+
+        ocultarErrorCobro();
+        renderizarCarrito();
+    }
+
+
+    function eliminarProducto(idProducto) {
+        productosCarrito.delete(
+            idProducto
+        );
+
+        renderizarCarrito();
+    }
+
+
+    function renderizarCarrito() {
+        listaCarrito.innerHTML = "";
+
+        if (productosCarrito.size === 0) {
+            carritoVacio.hidden = false;
+            listaCarrito.hidden = true;
+        } else {
+            carritoVacio.hidden = true;
+            listaCarrito.hidden = false;
+        }
+
+        productosCarrito.forEach((producto) => {
+            const subtotalProducto = (
+                producto.precio
+                * producto.cantidad
+            );
+
+            const fila = document.createElement(
+                "article"
+            );
+
+            fila.className = "quick-sale-cart-item";
+
+            fila.dataset.idProducto = producto.id;
+
+            fila.innerHTML = `
+                <div class="quick-sale-cart-item__main">
+
+                    <strong>
+                        ${escaparHtml(producto.nombre)}
+                    </strong>
+
+                    <small>
+                        ${escaparHtml(producto.categoria)}
+                    </small>
+
+                    <span>
+                        ${formatoMoneda(producto.precio)}
+                        c/u
+                    </span>
+
+                </div>
+
+                <div class="quick-sale-cart-item__controls">
+
+                    <button
+                        type="button"
+                        class="cart-quantity-button"
+                        data-action="restar"
+                        aria-label="Disminuir cantidad"
+                    >
+                        −
+                    </button>
+
+                    <strong>
+                        ${producto.cantidad}
+                    </strong>
+
+                    <button
+                        type="button"
+                        class="cart-quantity-button"
+                        data-action="sumar"
+                        aria-label="Aumentar cantidad"
+                    >
+                        +
+                    </button>
+
+                </div>
+
+                <div class="quick-sale-cart-item__subtotal">
+
+                    <strong>
+                        ${formatoMoneda(subtotalProducto)}
+                    </strong>
+
+                    <button
+                        type="button"
+                        class="cart-remove-button"
+                        data-action="eliminar"
+                    >
+                        Eliminar
+                    </button>
+
+                </div>
+            `;
+
+            listaCarrito.appendChild(
+                fila
+            );
+        });
+
+        calcularTotales();
+    }
+
+
+    function calcularTotales() {
+        let subtotal = 0;
+        let unidades = 0;
+
+        productosCarrito.forEach(
+            (producto) => {
+                subtotal += (
+                    producto.precio
+                    * producto.cantidad
+                );
+
+                unidades += producto.cantidad;
+            }
+        );
+
+        totalVenta = Number(
+            subtotal.toFixed(2)
+        );
+
+        subtotalVentaElemento.textContent = (
+            formatoMoneda(totalVenta)
+        );
+
+        totalVentaElemento.textContent = (
+            formatoMoneda(totalVenta)
+        );
+
+        cantidadConceptosElemento.textContent = (
+            unidades === 1
+                ? "1 producto"
+                : `${unidades} productos`
+        );
+
+        botonCobrar.disabled = (
+            productosCarrito.size === 0
+            || totalVenta <= 0
+        );
+
+        if (modalCobro.open) {
+            actualizarResumenPagos();
+        }
+    }
+
+
+    // ==========================================
+    // PAGOS
+    // ==========================================
+
+    function crearFilaPago(
+        metodo = "efectivo",
+        monto = "",
+        referencia = ""
+    ) {
+        contadorPagos += 1;
+
+        const fila = document.createElement(
+            "div"
+        );
+
+        fila.className = "payment-row";
+        fila.dataset.paymentId = contadorPagos;
+
+        fila.innerHTML = `
+            <div>
+
+                <label class="form-label">
+                    Método
+                </label>
+
+                <select class="form-select payment-method">
+
+                    <option value="efectivo">
+                        Efectivo
+                    </option>
+
+                    <option value="tarjeta">
+                        Tarjeta
+                    </option>
+
+                    <option value="transferencia">
+                        Transferencia
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div>
+
+                <label class="form-label">
+                    Monto
+                </label>
+
+                <input
+                    type="number"
+                    class="form-control payment-amount"
+                    min="0.01"
+                    step="0.01"
+                    value="${monto}"
+                    placeholder="0.00"
+                >
+
+            </div>
+
+            <div class="payment-reference-container">
+
+                <label class="form-label">
+                    Referencia
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control payment-reference"
+                    maxlength="100"
+                    value="${escaparHtml(referencia)}"
+                    placeholder="Opcional"
+                >
+
+            </div>
+
+            <button
+                type="button"
+                class="payment-remove"
+                aria-label="Eliminar pago"
+            >
+                ×
+            </button>
+        `;
+
+        fila.querySelector(
+            ".payment-method"
+        ).value = metodo;
+
+        listaPagos.appendChild(
+            fila
+        );
+
+        actualizarReferenciaPago(
+            fila
+        );
+
+        actualizarResumenPagos();
+    }
+
+
+    function actualizarReferenciaPago(fila) {
+        const metodo = fila.querySelector(
+            ".payment-method"
+        ).value;
+
+        const contenedor = fila.querySelector(
+            ".payment-reference-container"
+        );
+
+        const inputReferencia = fila.querySelector(
+            ".payment-reference"
+        );
+
+        const esEfectivo = (
+            metodo === "efectivo"
+        );
+
+        contenedor.hidden = esEfectivo;
+
+        inputReferencia.disabled = esEfectivo;
+
+        if (esEfectivo) {
+            inputReferencia.value = "";
+        }
+    }
+
+
+    function obtenerPagosFormulario() {
+        return Array.from(
+            listaPagos.querySelectorAll(
+                ".payment-row"
+            )
+        ).map((fila) => ({
+            metodo: fila.querySelector(
+                ".payment-method"
+            ).value,
+
+            monto: fila.querySelector(
+                ".payment-amount"
+            ).value,
+
+            referencia: fila.querySelector(
+                ".payment-reference"
+            ).value.trim()
+        }));
+    }
+
+
+    function actualizarResumenPagos() {
+        const pagos = obtenerPagosFormulario();
+
+        const totalPagado = pagos.reduce(
+            (acumulado, pago) => {
+                return (
+                    acumulado
+                    + Number(
+                        pago.monto || 0
+                    )
+                );
+            },
+            0
+        );
+
+        const restante = Math.max(
+            totalVenta - totalPagado,
+            0
+        );
+
+        const cambio = Math.max(
+            totalPagado - totalVenta,
+            0
+        );
+
+        modalTotal.textContent = (
+            formatoMoneda(totalVenta)
+        );
+
+        totalPagadoElemento.textContent = (
+            formatoMoneda(totalPagado)
+        );
+
+        totalRestanteElemento.textContent = (
+            formatoMoneda(restante)
+        );
+
+        totalCambioElemento.textContent = (
+            formatoMoneda(cambio)
+        );
+
+        const existePagoInvalido = pagos.some(
+            (pago) => {
+                return (
+                    !Number.isFinite(
+                        Number(pago.monto)
+                    )
+                    || Number(pago.monto) <= 0
+                );
+            }
+        );
+
+        const tieneEfectivo = pagos.some(
+            (pago) => {
+                return (
+                    pago.metodo === "efectivo"
+                );
+            }
+        );
+
+        const cambioValido = (
+            cambio === 0
+            || tieneEfectivo
+        );
+
+        confirmarCobroBoton.disabled = (
+            pagos.length === 0
+            || totalPagado < totalVenta
+            || existePagoInvalido
+            || !cambioValido
+            || procesandoCobro
+        );
+
+        if (
+            cambio > 0
+            && !tieneEfectivo
+        ) {
+            mostrarErrorCobro(
+                "Solo un pago en efectivo puede generar cambio."
+            );
+        } else {
+            ocultarErrorCobro();
+        }
+    }
+
+
+    function abrirModalCobro() {
+        if (
+            productosCarrito.size === 0
+            || totalVenta <= 0
+        ) {
+            return;
+        }
+
+        listaPagos.innerHTML = "";
+        contadorPagos = 0;
+        procesandoCobro = false;
+
+        confirmarCobroBoton.textContent = (
+            "Confirmar cobro"
+        );
+
+        ocultarErrorCobro();
+
+        crearFilaPago(
+            "efectivo",
+            totalVenta.toFixed(2)
+        );
+
+        modalCobro.showModal();
+    }
+
+
+    function cerrarModalCobro() {
+        if (procesandoCobro) {
+            return;
+        }
+
+        modalCobro.close();
+    }
+
+
+    function mostrarErrorCobro(mensaje) {
+        mensajeCobro.textContent = mensaje;
+        mensajeCobro.classList.remove(
+            "d-none"
+        );
+    }
+
+
+    function ocultarErrorCobro() {
+        mensajeCobro.textContent = "";
+        mensajeCobro.classList.add(
+            "d-none"
+        );
+    }
+
+
+    // ==========================================
+    // PROCESAR VENTA
+    // ==========================================
+
+    async function procesarCobro() {
+        if (
+            procesandoCobro
+            || productosCarrito.size === 0
+        ) {
+            return;
+        }
+
+        const productos = Array.from(
+            productosCarrito.values()
+        ).map((producto) => ({
+            id_producto: producto.id,
+            cantidad: producto.cantidad
+        }));
+
+        const pagos = obtenerPagosFormulario();
+
+        const payload = {
+            id_cliente: null,
+
+            nombre_cliente_rapido: (
+                nombreClienteRapido.value
+                .trim()
+            ),
+
+            productos,
+
+            pagos,
+
+            descuento: "0.00",
+            impuestos: "0.00"
+        };
+
+        procesandoCobro = true;
+
+        confirmarCobroBoton.disabled = true;
+
+        confirmarCobroBoton.textContent = (
+            "Procesando..."
+        );
+
+        ocultarErrorCobro();
+
+        try {
+            const respuesta = await fetch(
+                "/ventas/rapida/cobrar",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": (
+                            "application/json"
+                        )
+                    },
+
+                    body: JSON.stringify(
+                        payload
+                    )
+                }
+            );
+
+            const resultado = await respuesta.json();
+
+            if (
+                !respuesta.ok
+                || !resultado.exito
+            ) {
+                throw new Error(
+                    resultado.mensaje
+                    || "No fue posible registrar la venta."
+                );
+            }
+
+            confirmarCobroBoton.textContent = (
+                "Venta registrada"
+            );
+
+            window.location.href = (
+                resultado.url_redireccion
+            );
+
+        } catch (error) {
+            procesandoCobro = false;
+
+            confirmarCobroBoton.textContent = (
+                "Confirmar cobro"
+            );
+
+            mostrarErrorCobro(
+                error.message
+            );
+
+            actualizarResumenPagos();
+        }
+    }
+
+
+    // ==========================================
+    // EVENTOS DEL CATÁLOGO
+    // ==========================================
+
+    if (buscadorProducto) {
+        buscadorProducto.addEventListener(
+            "input",
+            filtrarProductos
+        );
+
+        buscadorProducto.addEventListener(
+            "keydown",
+            (evento) => {
+                if (evento.key !== "Enter") {
+                    return;
+                }
+
+                evento.preventDefault();
+
+                const tarjeta = (
+                    buscarProductoPorCodigo(
+                        buscadorProducto.value
+                    )
+                );
+
+                if (tarjeta) {
+                    agregarProductoDesdeTarjeta(
+                        tarjeta
+                    );
+
+                    buscadorProducto.value = "";
+
+                    filtrarProductos();
+                }
+            }
+        );
+    }
+
+
+    document.addEventListener(
+        "click",
+        (evento) => {
+            const botonAgregar = evento.target.closest(
+                ".boton-agregar-producto"
+            );
+
+            if (botonAgregar) {
+                const tarjeta = botonAgregar.closest(
+                    ".quick-sale-product"
+                );
+
+                agregarProductoDesdeTarjeta(
+                    tarjeta
+                );
+
+                return;
+            }
+
+            const botonCantidad = evento.target.closest(
+                "[data-action]"
+            );
+
+            if (!botonCantidad) {
+                return;
+            }
+
+            const fila = botonCantidad.closest(
+                ".quick-sale-cart-item"
+            );
+
+            if (!fila) {
+                return;
+            }
+
+            const idProducto = Number(
+                fila.dataset.idProducto
+            );
+
+            const accion = botonCantidad.dataset.action;
+
+            if (accion === "sumar") {
+                modificarCantidad(
+                    idProducto,
+                    1
+                );
+            }
+
+            if (accion === "restar") {
+                modificarCantidad(
+                    idProducto,
+                    -1
+                );
+            }
+
+            if (accion === "eliminar") {
+                eliminarProducto(
+                    idProducto
+                );
+            }
+        }
+    );
+
+
+    // ==========================================
+    // EVENTOS DEL MODAL
+    // ==========================================
+
+    botonCobrar.addEventListener(
+        "click",
+        abrirModalCobro
+    );
+
+    cerrarModalCobroBoton.addEventListener(
+        "click",
+        cerrarModalCobro
+    );
+
+    cancelarCobroBoton.addEventListener(
+        "click",
+        cerrarModalCobro
+    );
+
+    agregarPagoBoton.addEventListener(
+        "click",
+        () => crearFilaPago()
+    );
+
+    confirmarCobroBoton.addEventListener(
+        "click",
+        procesarCobro
+    );
+
+    listaPagos.addEventListener(
+        "input",
+        actualizarResumenPagos
+    );
+
+    listaPagos.addEventListener(
+        "change",
+        (evento) => {
+            const fila = evento.target.closest(
+                ".payment-row"
+            );
+
+            if (fila) {
+                actualizarReferenciaPago(
+                    fila
+                );
+            }
+
+            actualizarResumenPagos();
+        }
+    );
+
+    listaPagos.addEventListener(
+        "click",
+        (evento) => {
+            const botonEliminar = evento.target.closest(
+                ".payment-remove"
+            );
+
+            if (!botonEliminar) {
+                return;
+            }
+
+            botonEliminar.closest(
+                ".payment-row"
+            ).remove();
+
+            actualizarResumenPagos();
+        }
+    );
+
+    modalCobro.addEventListener(
+        "cancel",
+        (evento) => {
+            evento.preventDefault();
+            cerrarModalCobro();
+        }
+    );
+
+
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
+
+    renderizarCarrito();
+    filtrarProductos();
+});
+</script>
+
+{% endblock %}

@@ -1,4 +1,5 @@
 from flask import flash, redirect, render_template, request, session
+from app_flask.utilidades.decoradores import admin_requerido
 
 from app_flask import app
 from app_flask.modelos.modelo_categoria_producto import CategoriaProducto
@@ -8,6 +9,7 @@ def sesion_iniciada():
     return "id_usuario" in session
 
 @app.route("/productos")
+@admin_requerido
 def listar_productos():
     if not sesion_iniciada():
         return redirect("/login")
@@ -22,6 +24,7 @@ def listar_productos():
     )
 
 @app.route("/productos/nuevo")
+@admin_requerido
 def formulario_nuevo_producto():
     if not sesion_iniciada():
         return redirect("/login")
@@ -34,6 +37,7 @@ def formulario_nuevo_producto():
     )
 
 @app.route("/productos/crear", methods=["POST"])
+@admin_requerido
 def crear_producto():
     if not sesion_iniciada():
         return redirect("/login")
@@ -63,6 +67,7 @@ def crear_producto():
     return redirect("/productos")
 
 @app.route("/productos/<int:id_producto>/editar")
+@admin_requerido
 def formulario_editar_producto(id_producto):
     if not sesion_iniciada():
         return redirect("/login")
@@ -84,6 +89,7 @@ def formulario_editar_producto(id_producto):
     )
 
 @app.route("/productos/<int:id_producto>/actualizar", methods=["POST"])
+@admin_requerido
 def actualizar_producto(id_producto):
     if not sesion_iniciada():
         return redirect("/login")
@@ -123,6 +129,7 @@ def actualizar_producto(id_producto):
     return redirect("/productos")
 
 @app.route("/productos/<int:id_producto>/estado", methods=["POST"])
+@admin_requerido
 def cambiar_estado_producto(id_producto):
     if not sesion_iniciada():
         return redirect("/login")

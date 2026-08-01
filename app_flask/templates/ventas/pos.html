@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+Punto de venta | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+
+<div class="page-header">
+
+    <div>
+        <p class="page-eyebrow">
+            Operación de ventas
+        </p>
+
+        <h1 class="page-title">
+            Punto de venta
+        </h1>
+
+        <p class="page-description">
+            Selecciona una orden confirmada o en proceso para cobrarla.
+        </p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a
+            href="/agenda"
+            class="btn btn-outline-secondary"
+        >
+            Ver agenda
+        </a>
+
+        <a
+            href="/ventas/rapida"
+            class="btn btn-pets"
+        >
+            + Venta rápida
+        </a>
+
+    </div>
+
+</div>
+
+
+<section class="panel">
+
+    <form
+        action="/pos"
+        method="GET"
+        class="pos-queue-filters"
+    >
+
+        <div class="pos-queue-filters__search">
+
+            <label
+                for="buscar"
+                class="form-label"
+            >
+                Buscar orden
+            </label>
+
+            <input
+                type="search"
+                id="buscar"
+                name="buscar"
+                class="form-control"
+                value="{{ termino }}"
+                placeholder="Folio, cliente, mascota, servicio o estilista"
+                autocomplete="off"
+            >
+
+        </div>
+
+        <div>
+
+            <label
+                for="fecha"
+                class="form-label"
+            >
+                Fecha
+            </label>
+
+            <input
+                type="date"
+                id="fecha"
+                name="fecha"
+                class="form-control"
+                value="{{ fecha_seleccionada }}"
+            >
+
+        </div>
+
+        <button
+            type="submit"
+            class="btn btn-pets"
+        >
+            Buscar
+        </button>
+
+        {% if termino %}
+
+            <a
+                href="/pos?fecha={{ fecha_seleccionada }}"
+                class="btn btn-outline-secondary"
+            >
+                Limpiar
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</section>
+
+
+<section class="panel">
+
+    <div class="panel-header">
+
+        <div>
+            <h2 class="panel-title">
+                Órdenes disponibles
+            </h2>
+
+            <p class="panel-description">
+                {{ ordenes|length }}
+
+                {% if ordenes|length == 1 %}
+                    orden lista para cobrar.
+                {% else %}
+                    órdenes listas para cobrar.
+                {% endif %}
+            </p>
+        </div>
+
+    </div>
+
+
+    {% if ordenes %}
+
+        <div class="pos-queue">
+
+            {% for orden in ordenes %}
+
+                <article class="pos-queue-card">
+
+                    <div
+                        class="pos-queue-card__color"
+                        {% if orden.color_agenda %}
+                            style="
+                                background:
+                                {{ orden.color_agenda }};
+                            "
+                        {% endif %}
+                    ></div>
+
+                    <div class="pos-queue-card__main">
+
+                        <div class="pos-queue-card__heading">
+
+                            <div>
+
+                                <span class="pos-queue-card__folio">
+                                    {{ orden.folio }}
+                                </span>
+
+                                <h3>
+                                    {{ orden.nombre_mascota }}
+                                </h3>
+
+                                <p>
+                                    {{ orden.nombre_cliente }}
+                                </p>
+
+                            </div>
+
+                            {% if orden.estado == "confirmada" %}
+
+                                <span
+                                    class="
+                                        status-badge
+                                        status-badge--success
+                                    "
+                                >
+                                    Confirmada
+                                </span>
+
+                            {% else %}
+
+                                <span
+                                    class="
+                                        status-badge
+                                        status-badge--info
+                                    "
+                                >
+                                    En proceso
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div class="pos-queue-card__details">
+
+                            <div>
+                                <span>
+                                    Servicio
+                                </span>
+
+                                <strong>
+                                    {{ orden.nombre_servicio }}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>
+                                    Estilista
+                                </span>
+
+                                <strong>
+                                    {{ orden.nombre_estilista }}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>
+                                    Fecha
+                                </span>
+
+                                <strong>
+                                    {{ orden.fecha.strftime("%d/%m/%Y") }}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>
+                                    Hora
+                                </span>
+
+                                <strong>
+                                    {% if
+                                        orden.hora_inicio.total_seconds
+                                        is defined
+                                    %}
+
+                                        {% set segundos =
+                                            orden.hora_inicio
+                                            .total_seconds()|int
+                                        %}
+
+                                        {% set horas =
+                                            segundos // 3600
+                                        %}
+
+                                        {% set minutos =
+                                            (segundos % 3600) // 60
+                                        %}
+
+                                        {{
+                                            "%02d:%02d"|format(
+                                                horas,
+                                                minutos
+                                            )
+                                        }}
+
+                                    {% else %}
+
+                                        {{ orden.hora_inicio }}
+
+                                    {% endif %}
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="pos-queue-card__actions">
+
+                            <a
+                                href="/agenda/orden/{{ orden.id_orden }}"
+                                class="btn btn-sm btn-outline-secondary"
+                            >
+                                Ver orden
+                            </a>
+
+                            <a
+                                href="/ventas/nueva?orden={{ orden.id_orden }}"
+                                class="btn btn-sm btn-pets"
+                            >
+                                Abrir POS
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+
+            <div class="empty-state__icon">
+                🛒
+            </div>
+
+            <h3>
+                No hay órdenes disponibles
+            </h3>
+
+            <p>
+                Para aparecer aquí, una orden debe estar confirmada
+                o en proceso y todavía no debe haber sido cobrada.
+            </p>
+
+            <a
+                href="/agenda?fecha={{ fecha_seleccionada }}"
+                class="btn btn-pets"
+            >
+                Ir a la agenda
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

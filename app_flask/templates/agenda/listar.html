@@ -53,7 +53,7 @@ Agenda
             href="/agenda/nueva?fecha={{ fecha_seleccionada }}"
             class="btn btn-pets"
         >
-            + Nueva Orden
+            + Nueva orden
         </a>
 
     </div>
@@ -61,123 +61,193 @@ Agenda
 </div>
 
 
-<div class="scheduler">
+{% if estilistas %}
 
-    <!-- =========================
-         CABECERA
-    ========================== -->
+    <div class="scheduler-wrapper">
 
-    <div class="scheduler__header">
+        <div
+            class="scheduler"
+            style="
+                --scheduler-employees:
+                {{ estilistas|length }};
+            "
+        >
 
-        <div class="scheduler__time">
+            <!-- =====================================
+                 CABECERA
+            ====================================== -->
 
-            Hora
+            <div class="scheduler__header">
 
-        </div>
+                <div class="scheduler__time">
+                    Hora
+                </div>
 
-        {% for estilista in estilistas %}
+                {% for estilista in estilistas %}
 
-            <div
-                class="scheduler__employee"
-                {% if estilista.color_agenda %}
-                    style="
-                        border-top:4px solid
-                        {{ estilista.color_agenda }};
-                    "
-                {% endif %}
-            >
-
-                {{ estilista.nombre }}
-
-            </div>
-
-        {% endfor %}
-
-    </div>
-
-
-    <!-- =========================
-         HORARIOS
-    ========================== -->
-
-    {% for hora in horarios %}
-
-        <div class="scheduler__row">
-
-            <div class="scheduler__time">
-
-                {{ hora }}
-
-            </div>
-
-            {% for estilista in estilistas %}
-
-                {% set llave = hora ~ "_" ~ estilista.id_usuario %}
-                {% set ordenes = agenda.get(llave, []) %}
-
-                <div
-                    class="scheduler__cell"
-                    data-hora="{{ hora }}"
-                    data-estilista="{{ estilista.id_usuario }}"
-                >
-
-                    {% for orden in ordenes %}
-
-                        <a
-                            href="/agenda/orden/{{ orden.id_orden }}"
-                            class="
-                                order-card
-                                order-card--{{ orden.estado }}
+                    <div
+                        class="scheduler__employee"
+                        {% if estilista.color_agenda %}
+                            style="
+                                border-top-color:
+                                {{ estilista.color_agenda }};
                             "
-                        >
+                        {% endif %}
+                    >
 
-                            <strong>
+                        <span class="scheduler__employee-name">
+                            {{ estilista.nombre }}
+                        </span>
 
-                                {{ orden.nombre_mascota }}
-
-                            </strong>
-
-                            <small>
-
-                                {{ orden.nombre_cliente }}
-
-                            </small>
-
-                            <small>
-
-                                {{ orden.nombre_servicio }}
-
-                            </small>
+                        {% if estilista.color_agenda %}
 
                             <span
-                                class="order-card__status"
-                            >
+                                class="scheduler__employee-color"
+                                style="
+                                    background:
+                                    {{ estilista.color_agenda }};
+                                "
+                            ></span>
 
-                                {% if orden.estado=="pendiente" %}
+                        {% endif %}
 
-                                    Pendiente
+                    </div>
 
-                                {% elif orden.estado=="confirmada" %}
+                {% endfor %}
 
-                                    Confirmada
+            </div>
 
-                                {% elif orden.estado=="en_proceso" %}
 
-                                    En proceso
+            <!-- =====================================
+                 BLOQUES DE HORARIO
+            ====================================== -->
 
-                                {% elif orden.estado=="finalizada" %}
+            {% for hora in horarios %}
 
-                                    Finalizada
+                <div class="scheduler__row">
 
-                                {% else %}
+                    <div class="scheduler__time">
+                        {{ hora }}
+                    </div>
 
-                                    {{ orden.estado }}
+                    {% for estilista in estilistas %}
 
+                        {% set llave =
+                            hora
+                            ~ "_"
+                            ~ estilista.id_usuario
+                        %}
+
+                        {% set ordenes =
+                            agenda.get(
+                                llave,
+                                []
+                            )
+                        %}
+
+                        <div
+                            class="
+                                scheduler__cell
+                                {% if ordenes %}
+                                    scheduler__cell--occupied
                                 {% endif %}
+                            "
+                            data-hora="{{ hora }}"
+                            data-estilista="{{ estilista.id_usuario }}"
+                        >
 
-                            </span>
+                            {% for orden in ordenes %}
 
-                        </a>
+                                <a
+                                    href="/agenda/orden/{{ orden.id_orden }}"
+                                    class="
+                                        order-card
+                                        order-card--{{ orden.estado }}
+                                    "
+                                    style="
+                                        --order-blocks:
+                                        {{ orden.bloques_agenda or 2 }};
+                                    "
+                                    title="
+                                        {{ orden.folio }}
+                                        · {{ orden.nombre_mascota }}
+                                        · {{ orden.nombre_servicio }}
+                                    "
+                                >
+
+                                    <div class="order-card__heading">
+
+                                        <strong class="order-card__pet">
+                                            {{ orden.nombre_mascota }}
+                                        </strong>
+
+                                        <span class="order-card__folio">
+                                            {{ orden.folio }}
+                                        </span>
+
+                                    </div>
+
+                                    <small class="order-card__client">
+                                        {{ orden.nombre_cliente }}
+                                    </small>
+
+                                    <small class="order-card__service">
+                                        {{ orden.nombre_servicio }}
+                                    </small>
+
+                                    <small class="order-card__duration">
+                                        {{ orden.duracion_minutos }}
+                                        minutos
+                                    </small>
+
+                                    <span
+                                        class="
+                                            order-card__status
+                                            order-card__status--{{ orden.estado }}
+                                        "
+                                    >
+
+                                        {% if orden.estado == "pendiente" %}
+
+                                            Pendiente
+
+                                        {% elif orden.estado == "confirmada" %}
+
+                                            Confirmada
+
+                                        {% elif orden.estado == "en_proceso" %}
+
+                                            En proceso
+
+                                        {% elif orden.estado == "finalizada" %}
+
+                                            Finalizada
+
+                                        {% elif orden.estado == "cancelada" %}
+
+                                            Cancelada
+
+                                        {% elif orden.estado == "no_asistio" %}
+
+                                            No asistió
+
+                                        {% else %}
+
+                                            {{
+                                                orden.estado
+                                                |replace("_", " ")
+                                                |capitalize
+                                            }}
+
+                                        {% endif %}
+
+                                    </span>
+
+                                </a>
+
+                            {% endfor %}
+
+                        </div>
 
                     {% endfor %}
 
@@ -187,8 +257,42 @@ Agenda
 
         </div>
 
-    {% endfor %}
+    </div>
 
-</div>
+{% else %}
+
+    <section class="panel">
+
+        <div class="empty-state">
+
+            <div class="empty-state__icon">
+                ✂️
+            </div>
+
+            <h3>
+                No hay estilistas configurados
+            </h3>
+
+            <p>
+                Registra o activa usuarios con la opción
+                “Mostrar este usuario como estilista en la agenda”.
+            </p>
+
+            {% if session.get("rol") == "admin" %}
+
+                <a
+                    href="/usuarios/nuevo"
+                    class="btn btn-pets"
+                >
+                    Registrar estilista
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+{% endif %}
 
 {% endblock %}

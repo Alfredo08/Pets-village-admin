@@ -1,4 +1,5 @@
 from flask import flash, redirect, render_template, request, session
+from app_flask.utilidades.decoradores import admin_requerido
 
 from app_flask import app
 from app_flask.modelos.modelo_servicio import Servicio
@@ -9,6 +10,7 @@ def usuario_autenticado():
 
 
 @app.route("/servicios")
+@admin_requerido
 def listar_servicios():
     if not usuario_autenticado():
         return redirect("/login")
@@ -24,6 +26,7 @@ def listar_servicios():
 
 
 @app.route("/servicios/nuevo")
+@admin_requerido
 def formulario_nuevo_servicio():
     if not usuario_autenticado():
         return redirect("/login")
@@ -37,6 +40,7 @@ def formulario_nuevo_servicio():
 
 
 @app.route("/servicios/crear", methods=["POST"])
+@admin_requerido
 def crear_servicio():
     if not usuario_autenticado():
         return redirect("/login")
@@ -86,6 +90,7 @@ def crear_servicio():
 
 
 @app.route("/servicios/<int:id_servicio>/editar")
+@admin_requerido
 def formulario_editar_servicio(id_servicio):
     if not usuario_autenticado():
         return redirect("/login")
@@ -112,11 +117,11 @@ def formulario_editar_servicio(id_servicio):
         formulario=formulario_guardado
     )
 
-
 @app.route(
     "/servicios/<int:id_servicio>/actualizar",
     methods=["POST"]
 )
+@admin_requerido
 def actualizar_servicio(id_servicio):
     if not usuario_autenticado():
         return redirect("/login")
@@ -186,6 +191,7 @@ def actualizar_servicio(id_servicio):
     "/servicios/<int:id_servicio>/estado",
     methods=["POST"]
 )
+@admin_requerido
 def cambiar_estado_servicio(id_servicio):
     if not usuario_autenticado():
         return redirect("/login")
