@@ -151,4 +151,407 @@
       })
     })
   </script>
+
+  <!-- ==================================================
+     TICKET EXCLUSIVO PARA IMPRESIÓN
+=================================================== -->
+
+<section class="thermal-ticket print-only">
+
+    <!-- LOGO -->
+
+    <header class="thermal-ticket__header">
+
+        <img
+            src="{{ url_for('static', filename='img/Petvillage.jpg') }}"
+            alt="Pet Village"
+            class="thermal-ticket__logo"
+        >
+
+        <div class="thermal-ticket__brand">
+            PET VILLAGE
+        </div>
+
+        <div class="thermal-ticket__tagline">
+            GROOMING · BOUTIQUE · SPA
+        </div>
+
+        <div class="thermal-ticket__subtitle">
+            Gestión y estética canina
+        </div>
+
+    </header>
+
+
+    <div class="thermal-ticket__separator">
+        --------------------------------
+    </div>
+
+
+    <!-- DATOS DE LA VENTA -->
+
+    <section class="thermal-ticket__information">
+
+        <div class="thermal-ticket__line">
+
+            <span>
+                Venta:
+            </span>
+
+            <strong>
+                {{ venta.folio }}
+            </strong>
+
+        </div>
+
+
+        {% if venta.folio_orden %}
+
+            <div class="thermal-ticket__line">
+
+                <span>
+                    Orden:
+                </span>
+
+                <strong>
+                    {{ venta.folio_orden }}
+                </strong>
+
+            </div>
+
+        {% endif %}
+
+
+        <div class="thermal-ticket__line">
+
+            <span>
+                Fecha:
+            </span>
+
+            <strong>
+
+                {% if venta.fecha_creacion %}
+
+                    {{
+                        venta.fecha_creacion
+                        .strftime("%d/%m/%Y %H:%M")
+                    }}
+
+                {% else %}
+
+                    —
+
+                {% endif %}
+
+            </strong>
+
+        </div>
+
+
+        <div class="thermal-ticket__line">
+
+            <span>
+                Tipo:
+            </span>
+
+            <strong>
+
+                {% if venta.tipo_venta == "rapida" %}
+
+                    Venta de productos
+
+                {% else %}
+
+                    Servicio
+
+                {% endif %}
+
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <div class="thermal-ticket__separator">
+        --------------------------------
+    </div>
+
+
+    <!-- CLIENTE -->
+
+    <section class="thermal-ticket__customer">
+
+        <p>
+            <strong>Cliente:</strong>
+
+            {{
+                venta.nombre_cliente
+                or venta.nombre_cliente_rapido
+                or "Público general"
+            }}
+        </p>
+
+
+        {% if venta.nombre_mascota %}
+
+            <p>
+                <strong>Mascota:</strong>
+                {{ venta.nombre_mascota }}
+            </p>
+
+        {% endif %}
+
+
+        {% if venta.nombre_usuario %}
+
+            <p>
+                <strong>Atendió:</strong>
+                {{ venta.nombre_usuario }}
+            </p>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- CONCEPTOS -->
+
+    <div class="thermal-ticket__section-title">
+        CONCEPTOS
+    </div>
+
+
+    <section class="thermal-ticket__items">
+
+        {% for detalle in detalles %}
+
+            <article class="thermal-ticket__item">
+
+                <div class="thermal-ticket__item-name">
+                    {{ detalle.descripcion }}
+                </div>
+
+                <div class="thermal-ticket__item-values">
+
+                    <span>
+                        {{ detalle.cantidad }}
+                        ×
+                        ${{
+                            "{:,.2f}".format(
+                                detalle.precio_unitario
+                            )
+                        }}
+                    </span>
+
+                    <strong>
+                        ${{
+                            "{:,.2f}".format(
+                                detalle.subtotal
+                            )
+                        }}
+                    </strong>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </section>
+
+
+    <div class="thermal-ticket__separator">
+        --------------------------------
+    </div>
+
+
+    <!-- TOTALES -->
+
+    <section class="thermal-ticket__totals">
+
+        <div class="thermal-ticket__line">
+
+            <span>
+                Subtotal:
+            </span>
+
+            <span>
+                ${{
+                    "{:,.2f}".format(
+                        venta.subtotal
+                    )
+                }}
+            </span>
+
+        </div>
+
+
+        <div class="thermal-ticket__line">
+
+            <span>
+                Descuento:
+            </span>
+
+            <span>
+                ${{
+                    "{:,.2f}".format(
+                        venta.descuento
+                    )
+                }}
+            </span>
+
+        </div>
+
+
+        <div class="thermal-ticket__line">
+
+            <span>
+                Impuestos:
+            </span>
+
+            <span>
+                ${{
+                    "{:,.2f}".format(
+                        venta.impuestos
+                    )
+                }}
+            </span>
+
+        </div>
+
+
+        <div class="thermal-ticket__grand-total">
+
+            <span>
+                TOTAL
+            </span>
+
+            <strong>
+                ${{
+                    "{:,.2f}".format(
+                        venta.total
+                    )
+                }}
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- PAGOS -->
+
+    <div class="thermal-ticket__section-title">
+        PAGOS
+    </div>
+
+
+    <section class="thermal-ticket__payments">
+
+        {% set total_pagado = namespace(valor=0) %}
+
+        {% for pago in pagos %}
+
+            {% set total_pagado.valor =
+                total_pagado.valor + pago.monto
+            %}
+
+            <div class="thermal-ticket__line">
+
+                <span>
+
+                    {% if pago.metodo == "efectivo" %}
+
+                        Efectivo:
+
+                    {% elif pago.metodo == "tarjeta" %}
+
+                        Tarjeta:
+
+                    {% elif pago.metodo == "transferencia" %}
+
+                        Transferencia:
+
+                    {% else %}
+
+                        {{ pago.metodo|capitalize }}:
+
+                    {% endif %}
+
+                </span>
+
+                <strong>
+                    ${{
+                        "{:,.2f}".format(
+                            pago.monto
+                        )
+                    }}
+                </strong>
+
+            </div>
+
+
+            {% if pago.referencia %}
+
+                <div class="thermal-ticket__reference">
+                    Referencia: {{ pago.referencia }}
+                </div>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% set cambio =
+            total_pagado.valor - venta.total
+        %}
+
+        {% if cambio > 0 %}
+
+            <div class="thermal-ticket__line thermal-ticket__change">
+
+                <span>
+                    Cambio:
+                </span>
+
+                <strong>
+                    ${{
+                        "{:,.2f}".format(
+                            cambio
+                        )
+                    }}
+                </strong>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <div class="thermal-ticket__separator">
+        --------------------------------
+    </div>
+
+
+    <!-- PIE -->
+
+    <footer class="thermal-ticket__footer">
+
+        <strong>
+            Gracias por visitar Pet Village
+        </strong>
+
+        <span>
+            Conserve este ticket
+        </span>
+
+        <span class="thermal-ticket__paws">
+            * &nbsp; * &nbsp; *
+        </span>
+
+    </footer>
+
+</section>
 {% endblock %}

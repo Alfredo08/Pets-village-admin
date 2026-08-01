@@ -2870,3 +2870,343 @@ ORDER CARD
         font-weight: 700;
     }
 }
+
+/* =====================================================
+   TICKET TÉRMICO PARA NAVEGADOR
+===================================================== */
+
+.print-only {
+    display: none;
+}
+
+
+/* =====================================================
+   IMPRESIÓN 58 MM
+===================================================== */
+
+@media print {
+
+    @page {
+        size: 58mm auto;
+        margin: 0;
+    }
+
+    html,
+    body {
+        width: 58mm !important;
+        min-width: 58mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+
+    body {
+        color: #000000 !important;
+        font-family:
+            "Courier New",
+            Courier,
+            monospace !important;
+        font-size: 9.5px !important;
+        line-height: 1.3 !important;
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+    }
+
+    /*
+     * Ocultar toda la interfaz normal.
+     */
+    body * {
+        visibility: hidden !important;
+    }
+
+    /*
+     * Volver visible únicamente el ticket.
+     */
+    .thermal-ticket,
+    .thermal-ticket * {
+        visibility: visible !important;
+    }
+
+    .thermal-ticket {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+
+        display: block !important;
+
+        width: 54mm !important;
+        max-width: 54mm !important;
+
+        margin: 0 !important;
+        padding: 2mm !important;
+
+        overflow: hidden !important;
+
+        border: 0 !important;
+        border-radius: 0 !important;
+
+        background: #ffffff !important;
+        box-shadow: none !important;
+
+        color: #000000 !important;
+    }
+
+    .no-print,
+    .sidebar,
+    .page-header,
+    .ticket-actions,
+    nav,
+    button,
+    .btn,
+    .alert {
+        display: none !important;
+    }
+
+
+    /* ENCABEZADO */
+
+    .thermal-ticket__header {
+        display: block;
+        margin: 0 0 2mm;
+        text-align: center;
+    }
+
+    .thermal-ticket__logo {
+        display: block;
+
+        width: 28mm !important;
+        max-width: 28mm !important;
+        height: 28mm !important;
+
+        margin: 0 auto 1mm;
+
+        object-fit: contain;
+
+        /*
+         * Convierte visualmente el logo a monocromático.
+         * Ajusta o elimina filter si tu JPG ya se imprime bien.
+         */
+        filter:
+            grayscale(1)
+            contrast(1.45)
+            brightness(1.05);
+    }
+
+    .thermal-ticket__brand {
+        margin-top: 0.5mm;
+
+        font-family:
+            Arial,
+            sans-serif;
+
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        line-height: 1;
+    }
+
+    .thermal-ticket__tagline {
+        margin-top: 1mm;
+
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .thermal-ticket__subtitle {
+        margin-top: 1mm;
+        font-size: 8px;
+    }
+
+
+    /* SEPARADORES */
+
+    .thermal-ticket__separator {
+        width: 100%;
+        margin: 1.3mm 0;
+
+        overflow: hidden;
+
+        font-size: 9px;
+        letter-spacing: 0;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+
+    /* INFORMACIÓN */
+
+    .thermal-ticket__information,
+    .thermal-ticket__customer,
+    .thermal-ticket__totals,
+    .thermal-ticket__payments {
+        width: 100%;
+    }
+
+    .thermal-ticket__line {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+
+        width: 100%;
+        gap: 2mm;
+
+        margin-bottom: 0.6mm;
+    }
+
+    .thermal-ticket__line > :last-child {
+        text-align: right;
+    }
+
+    .thermal-ticket__customer p {
+        margin: 0 0 0.8mm;
+        overflow-wrap: anywhere;
+    }
+
+
+    /* ENCABEZADOS NEGROS */
+
+    .thermal-ticket__section-title {
+        width: 100%;
+
+        margin: 2mm 0 1.5mm;
+        padding: 1.2mm 0.5mm;
+
+        background: #000000 !important;
+        color: #ffffff !important;
+
+        font-family:
+            Arial,
+            sans-serif;
+
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        line-height: 1;
+        text-align: center;
+
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+    }
+
+
+    /* ARTÍCULOS */
+
+    .thermal-ticket__items {
+        width: 100%;
+    }
+
+    .thermal-ticket__item {
+        margin: 0;
+        padding: 1.4mm 0;
+
+        border-bottom: 1px dotted #000000;
+
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .thermal-ticket__item:last-child {
+        border-bottom: 0;
+    }
+
+    .thermal-ticket__item-name {
+        margin-bottom: 0.8mm;
+
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .thermal-ticket__item-values {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+
+        width: 100%;
+        gap: 2mm;
+    }
+
+
+    /* TOTALES */
+
+    .thermal-ticket__grand-total {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+
+        width: 100%;
+
+        margin-top: 1.5mm;
+        padding-top: 1.5mm;
+
+        border-top: 2px solid #000000;
+
+        font-family:
+            Arial,
+            sans-serif;
+
+        font-weight: 900;
+    }
+
+    .thermal-ticket__grand-total span {
+        font-size: 13px;
+    }
+
+    .thermal-ticket__grand-total strong {
+        font-size: 17px;
+        line-height: 1;
+    }
+
+
+    /* PAGOS */
+
+    .thermal-ticket__reference {
+        margin:
+            -0.2mm
+            0
+            1mm;
+
+        font-size: 8px;
+        overflow-wrap: anywhere;
+    }
+
+    .thermal-ticket__change {
+        margin-top: 1.5mm;
+        padding-top: 1mm;
+        border-top: 1px dashed #000000;
+    }
+
+
+    /* PIE */
+
+    .thermal-ticket__footer {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+
+        gap: 1mm;
+
+        margin-top: 2mm;
+
+        font-family:
+            Arial,
+            sans-serif;
+
+        text-align: center;
+    }
+
+    .thermal-ticket__footer strong {
+        font-size: 10px;
+    }
+
+    .thermal-ticket__footer span {
+        font-size: 8px;
+    }
+
+    .thermal-ticket__paws {
+        margin-top: 1mm;
+        font-size: 12px !important;
+        font-weight: 900;
+        letter-spacing: 3px;
+    }
+}
