@@ -26,7 +26,12 @@ def admin_requerido(funcion):
         if "id_usuario" not in session:
             return redirect("/login")
 
-        if session.get("rol") != "admin":
+        roles_permitidos = {
+            "admin",
+            "recepcion"
+        }
+
+        if session.get("rol") not in roles_permitidos:
             flash(
                 "No tienes permisos para acceder a esta sección.",
                 "danger"

@@ -23,7 +23,10 @@ bcrypt = Bcrypt(app)
 def administrador_autenticado():
     return (
         "id_usuario" in session
-        and session.get("rol") == "admin"
+        and session.get("rol") in {
+            "admin",
+            "recepcion"
+        }
     )
 
 

@@ -405,7 +405,7 @@ Dashboard | PetsVillage
                     </p>
                 </div>
 
-                {% if session.get("rol") == "admin" %}
+                {% if session.get("rol") in ["admin", "recepcion"] %}
 
                     <a
                         href="/inventario"

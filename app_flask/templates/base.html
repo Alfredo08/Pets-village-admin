@@ -179,7 +179,7 @@
                  SECCIONES ADMINISTRATIVAS
             ========================== -->
 
-            {% if session.get("rol") == "admin" %}
+            {% if session.get("rol") in ["admin", "recepcion"] %}
 
               <a
                 href="/servicios"
