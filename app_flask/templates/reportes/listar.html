@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+  Reportes | PetsVillage
+{% endblock %}
+
+{% block contenido %}
+  <div class="page-header">
+    <div>
+      <p class="page-eyebrow">Administración</p>
+
+      <h1 class="page-title">Reportes</h1>
+
+      <p class="page-description">Genera y descarga información operativa en formato PDF.</p>
+    </div>
+  </div>
+
+  <div class="reports-grid">
+    <!--  =====================================
+         REPORTE DE INVENTARIO
+    ======================================  -->
+
+    <section class="panel report-card">
+      <div class="report-card__header">
+        <div class="report-card__icon">📦</div>
+
+        <div>
+          <h2 class="panel-title">Reporte de inventario</h2>
+
+          <p class="panel-description">Existencias actuales, stock mínimo y valor del inventario.</p>
+        </div>
+      </div>
+
+      <div class="report-card__information">
+        <span>Este reporte incluye:</span>
+
+        <ul>
+          <li>Productos activos.</li>
+
+          <li>Categorías y códigos de barras.</li>
+
+          <li>Existencia y stock mínimo.</li>
+
+          <li>Valor estimado de compra y venta.</li>
+        </ul>
+      </div>
+
+      <a href="/reportes/inventario" class="btn btn-pets w-100">Descargar PDF</a>
+    </section>
+
+    <!--  =====================================
+         REPORTE DE VENTAS
+    ======================================  -->
+
+    <section class="panel report-card">
+      <div class="report-card__header">
+        <div class="report-card__icon">💰</div>
+
+        <div>
+          <h2 class="panel-title">Reporte de ventas</h2>
+
+          <p class="panel-description">Ventas de servicio y ventas rápidas dentro de un periodo.</p>
+        </div>
+      </div>
+
+      <form action="/reportes/ventas" method="GET" class="report-card__form">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label for="fecha_inicio" class="form-label">Fecha inicial</label>
+
+            <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control" value="{{ fecha_inicio }}" max="{{ fecha_actual }}" required />
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label for="fecha_fin" class="form-label">Fecha final</label>
+
+            <input type="date" id="fecha_fin" name="fecha_fin" class="form-control" value="{{ fecha_fin }}" max="{{ fecha_actual }}" required />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-pets w-100">Descargar PDF</button>
+      </form>
+    </section>
+
+    <!--  =====================================
+         REPORTE DE CAJA
+    ======================================  -->
+
+    <section class="panel report-card">
+      <div class="report-card__header">
+        <div class="report-card__icon">🧾</div>
+
+        <div>
+          <h2 class="panel-title">Reporte de caja del día</h2>
+
+          <p class="panel-description">Resumen diario por método de pago y tipo de concepto vendido.</p>
+        </div>
+      </div>
+
+      <form action="/reportes/caja" method="GET" class="report-card__form">
+        <div>
+          <label for="fecha_caja" class="form-label">Fecha</label>
+
+          <input type="date" id="fecha_caja" name="fecha" class="form-control" value="{{ fecha_caja }}" max="{{ fecha_actual }}" required />
+        </div>
+
+        <button type="submit" class="btn btn-pets w-100">Descargar PDF</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="panel reports-help">
+    <div class="reports-help__icon">ℹ️</div>
+
+    <div>
+      <h2 class="panel-title">Información de los documentos</h2>
+
+      <p class="panel-description">Los archivos PDF incluirán la fecha de generación, el usuario responsable y la información disponible al momento de la descarga.</p>
+    </div>
+  </section>
+{% endblock %}

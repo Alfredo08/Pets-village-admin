@@ -3,10 +3,7 @@
   <head>
     <meta charset="UTF-8" />
 
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>
       {% block titulo %}
@@ -14,289 +11,197 @@
       {% endblock %}
     </title>
 
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/styles.css') }}"
-    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
   </head>
 
   <body>
-
-    {% if "id_usuario" in session %}
-
+    {% if 'id_usuario' in session %}
       <div class="app-layout">
-
         <aside class="sidebar">
-
           <div class="sidebar-brand">
-
-            <span class="sidebar-brand__icon">
-              🐶
-            </span>
+            <span class="sidebar-brand__icon">🐶</span>
 
             <div>
+              <strong>PetsVillage</strong>
 
-              <strong>
-                PetsVillage
-              </strong>
-
-              <small>
-                Gestión y estética canina
-              </small>
-
+              <small>Gestión y estética canina</small>
             </div>
-
           </div>
 
-
           <nav class="sidebar-menu">
-
-            <!-- =========================
+            <!--  =========================
                  DASHBOARD
-            ========================== -->
+            ==========================  -->
 
-            <a
-              href="/dashboard"
-              class="
+            <a href="/dashboard" class="
                 sidebar-link
                 {% if request.path.startswith('/dashboard') %}
                   sidebar-link--active
                 {% endif %}
-              "
-            >
+              ">
               <span>🏠</span>
               Dashboard
             </a>
 
-
-            <!-- =========================
+            <!--  =========================
                  CLIENTES
-            ========================== -->
+            ==========================  -->
 
-            <a
-              href="/clientes"
-              class="
+            <a href="/clientes" class="
                 sidebar-link
                 {% if request.path.startswith('/clientes') %}
                   sidebar-link--active
                 {% endif %}
-              "
-            >
+              ">
               <span>👥</span>
               Clientes
             </a>
 
-
-            <!-- =========================
+            <!--  =========================
                  MASCOTAS
-            ========================== -->
+            ==========================  -->
 
-            <a
-              href="/mascotas"
-              class="
+            <a href="/mascotas" class="
                 sidebar-link
                 {% if request.path.startswith('/mascotas') %}
                   sidebar-link--active
                 {% endif %}
-              "
-            >
+              ">
               <span>🐾</span>
               Mascotas
             </a>
 
-
-            <!-- =========================
+            <!--  =========================
                  AGENDA
-            ========================== -->
+            ==========================  -->
 
-            <a
-              href="/agenda"
-              class="
+            <a href="/agenda" class="
                 sidebar-link
                 {% if request.path.startswith('/agenda') %}
                   sidebar-link--active
                 {% endif %}
-              "
-            >
+              ">
               <span>📅</span>
               Agenda
             </a>
 
-
-            <!-- =========================
+            <!--  =========================
                  PUNTO DE VENTA
-            ========================== -->
+            ==========================  -->
 
-            <a
-              href="/pos"
-              class="
+            <a href="/pos" class="
                 sidebar-link
-                {% if
-                  request.path.startswith('/pos')
-                  or request.path.startswith('/ventas/nueva')
-                  or request.path.startswith('/ventas/rapida')
-                %}
+                {% if request.path.startswith('/pos') or request.path.startswith('/ventas/nueva') or request.path.startswith('/ventas/rapida') %}
                   sidebar-link--active
                 {% endif %}
-              "
-            >
+              ">
               <span>🛒</span>
               Punto de venta
             </a>
 
-
-            <!-- =========================
+            <!--  =========================
                  CAJA
-            ========================== -->
+            ==========================  -->
 
-            <a
-              href="/caja"
-              class="
+            <a href="/caja" class="
                 sidebar-link
-                {% if
-                  request.path.startswith('/caja')
-                  or (
-                    request.path.startswith('/ventas/')
-                    and not request.path.startswith('/ventas/nueva')
-                    and not request.path.startswith('/ventas/rapida')
-                  )
-                %}
+                {% if request.path.startswith('/caja') or request.path.startswith('/ventas/') and not request.path.startswith('/ventas/nueva') and not request.path.startswith('/ventas/rapida') %}
                   sidebar-link--active
                 {% endif %}
-              "
-            >
+              ">
               <span>💵</span>
               Caja
             </a>
 
-
-            <!-- =========================
+            <!--  =========================
                  SECCIONES ADMINISTRATIVAS
-            ========================== -->
+            ==========================  -->
 
-            {% if session.get("rol") in ["admin", "recepcion"] %}
-
-              <a
-                href="/servicios"
-                class="
+            {% if session.get('rol') in ['admin', 'recepcion'] %}
+              <a href="/servicios" class="
                   sidebar-link
                   {% if request.path.startswith('/servicios') %}
                     sidebar-link--active
                   {% endif %}
-                "
-              >
+                ">
                 <span>✂️</span>
                 Servicios
               </a>
 
-
-              <a
-                href="/productos"
-                class="
+              <a href="/productos" class="
                   sidebar-link
                   {% if request.path.startswith('/productos') %}
                     sidebar-link--active
                   {% endif %}
-                "
-              >
+                ">
                 <span>📦</span>
                 Productos
               </a>
 
-
-              <a
-                href="/inventario"
-                class="
+              <a href="/inventario" class="
                   sidebar-link
                   {% if request.path.startswith('/inventario') %}
                     sidebar-link--active
                   {% endif %}
-                "
-              >
+                ">
                 <span>📊</span>
                 Inventario
               </a>
 
-
-              <a
-                href="/usuarios"
-                class="
+              <a href="/reportes" class="
+                  sidebar-link
+                  {% if request.path.startswith('/reportes') %}
+                    sidebar-link--active
+                  {% endif %}
+                ">
+                              <span>📄</span>
+                              Reportes
+              </a>
+              
+              <a href="/usuarios" class="
                   sidebar-link
                   {% if request.path.startswith('/usuarios') %}
                     sidebar-link--active
                   {% endif %}
-                "
-              >
+                ">
                 <span>⚙️</span>
                 Usuarios
               </a>
 
             {% endif %}
-
           </nav>
 
-
           <div class="sidebar-footer">
-
             <div class="sidebar-user">
-
-              <div class="sidebar-user__avatar">
-                {{ session.nombre.0|upper }}
-              </div>
+              <div class="sidebar-user__avatar">{{ session.nombre.0|upper }}</div>
 
               <div>
+                <strong>{{ session.nombre }}</strong>
 
-                <strong>
-                  {{ session.nombre }}
-                </strong>
-
-                <small>
-                  {{ session.rol|capitalize }}
-                </small>
-
+                <small>{{ session.rol|capitalize }}</small>
               </div>
-
             </div>
 
-            <a
-              href="/logout"
-              class="sidebar-logout"
-            >
-              Cerrar sesión
-            </a>
-
+            <a href="/logout" class="sidebar-logout">Cerrar sesión</a>
           </div>
-
         </aside>
 
-
         <main class="main-content">
-
-          {% include "componentes/mensajes.html" %}
+          {% include 'componentes/mensajes.html' %}
 
           {% block contenido %}
+
           {% endblock %}
-
         </main>
-
       </div>
-
     {% else %}
-
       {% block auth_content %}
-      {% endblock %}
 
+      {% endblock %}
     {% endif %}
 
-
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    ></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

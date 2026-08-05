@@ -9,6 +9,7 @@ from app_flask.controladores import controlador_ordenes_servicios
 from app_flask.controladores import controlador_ventas
 from app_flask.controladores import controlador_caja
 from app_flask.controladores import controlador_dashboard
+from app_flask.controladores import controlador_reportes
 
 if __name__ == "__main__":
     app.run(debug=True)
