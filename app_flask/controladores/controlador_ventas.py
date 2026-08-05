@@ -171,18 +171,37 @@ def cobrar_venta():
             "mensaje": "Debes registrar al menos un pago."
         }), 400
 
+    servicio_payload = payload.get(
+        "servicio",
+        {}
+    )
+
+    if not isinstance(servicio_payload, dict):
+        return jsonify({
+            "exito": False,
+            "mensaje": (
+                "La información del servicio "
+                "no es válida."
+            )
+        }), 400
+
     data = {
         "id_orden": id_orden,
         "id_usuario": session["id_usuario"],
 
         "servicio": {
-            "id_tarifa": id_tarifa
+            "id_tarifa": id_tarifa,
+            "descuento_porcentaje": (
+                servicio_payload.get(
+                    "descuento_porcentaje",
+                    0
+                )
+            )
         },
 
         "productos": productos,
         "pagos": pagos,
 
-        "descuento": payload.get("descuento", "0.00"),
         "impuestos": payload.get("impuestos", "0.00")
     }
 
@@ -470,11 +489,6 @@ def cobrar_venta_rapida():
         "productos": productos,
 
         "pagos": pagos,
-
-        "descuento": payload.get(
-            "descuento",
-            "0.00"
-        ),
 
         "impuestos": payload.get(
             "impuestos",

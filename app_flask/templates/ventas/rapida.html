@@ -329,6 +329,18 @@ Venta rápida | PetsVillage
 
             </div>
 
+            <div>
+
+                <span>
+                    Descuento
+                </span>
+
+                <strong id="descuento_venta">
+                    -$0.00
+                </strong>
+
+            </div>
+
             <div class="quick-sale-cart__total">
 
                 <span>
@@ -544,6 +556,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const subtotalVentaElemento = document.getElementById(
         "subtotal_venta"
+    );
+
+    const descuentoVentaElemento = document.getElementById(
+        "descuento_venta"
     );
 
     const totalVentaElemento = document.getElementById(
@@ -817,7 +833,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     codigo,
                     precio,
                     stock,
-                    cantidad: 1
+                    cantidad: 1,
+                    descuentoPorcentaje: 0
                 }
             );
         }
@@ -876,6 +893,70 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+    function normalizarPorcentaje(valor) {
+        const porcentaje = Number(valor || 0);
+
+        if (!Number.isFinite(porcentaje)) {
+            return 0;
+        }
+
+        return Math.min(
+            Math.max(porcentaje, 0),
+            100
+        );
+    }
+
+
+    function calcularImportesProducto(producto) {
+        const importeBruto = (
+            producto.precio
+            * producto.cantidad
+        );
+
+        const porcentaje = normalizarPorcentaje(
+            producto.descuentoPorcentaje
+        );
+
+        const descuento = (
+            importeBruto
+            * porcentaje
+            / 100
+        );
+
+        const total = Math.max(
+            importeBruto - descuento,
+            0
+        );
+
+        return {
+            importeBruto: Number(importeBruto.toFixed(2)),
+            descuento: Number(descuento.toFixed(2)),
+            total: Number(total.toFixed(2)),
+            porcentaje
+        };
+    }
+
+
+    function actualizarDescuentoProducto(
+        idProducto,
+        valor
+    ) {
+        const producto = productosCarrito.get(
+            idProducto
+        );
+
+        if (!producto) {
+            return;
+        }
+
+        producto.descuentoPorcentaje = (
+            normalizarPorcentaje(valor)
+        );
+
+        renderizarCarrito();
+    }
+
+
     function renderizarCarrito() {
         listaCarrito.innerHTML = "";
 
@@ -888,9 +969,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         productosCarrito.forEach((producto) => {
-            const subtotalProducto = (
-                producto.precio
-                * producto.cantidad
+            const importes = calcularImportesProducto(
+                producto
             );
 
             const fila = document.createElement(
@@ -898,7 +978,6 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             fila.className = "quick-sale-cart-item";
-
             fila.dataset.idProducto = producto.id;
 
             fila.innerHTML = `
@@ -945,10 +1024,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 </div>
 
+                <div class="quick-sale-cart-item__discount">
+
+                    <label
+                        for="descuento_producto_${producto.id}"
+                        class="form-label mb-1"
+                    >
+                        Descuento
+                    </label>
+
+                    <div class="input-group input-group-sm">
+                        <input
+                            type="number"
+                            id="descuento_producto_${producto.id}"
+                            class="form-control cart-discount-input"
+                            data-id-producto="${producto.id}"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            value="${importes.porcentaje.toFixed(2)}"
+                            aria-label="Porcentaje de descuento"
+                        >
+
+                        <span class="input-group-text">
+                            %
+                        </span>
+                    </div>
+
+                    <small class="text-muted">
+                        -${formatoMoneda(importes.descuento)}
+                    </small>
+
+                </div>
+
                 <div class="quick-sale-cart-item__subtotal">
 
+                    <small class="text-muted">
+                        Importe: ${formatoMoneda(importes.importeBruto)}
+                    </small>
+
                     <strong>
-                        ${formatoMoneda(subtotalProducto)}
+                        ${formatoMoneda(importes.total)}
                     </strong>
 
                     <button
@@ -973,25 +1089,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function calcularTotales() {
         let subtotal = 0;
+        let descuentoTotal = 0;
+        let total = 0;
         let unidades = 0;
 
         productosCarrito.forEach(
             (producto) => {
-                subtotal += (
-                    producto.precio
-                    * producto.cantidad
+                const importes = (
+                    calcularImportesProducto(producto)
                 );
 
+                subtotal += importes.importeBruto;
+                descuentoTotal += importes.descuento;
+                total += importes.total;
                 unidades += producto.cantidad;
             }
         );
 
         totalVenta = Number(
-            subtotal.toFixed(2)
+            total.toFixed(2)
         );
 
         subtotalVentaElemento.textContent = (
-            formatoMoneda(totalVenta)
+            formatoMoneda(subtotal)
+        );
+
+        descuentoVentaElemento.textContent = (
+            `-${formatoMoneda(descuentoTotal)}`
         );
 
         totalVentaElemento.textContent = (
@@ -1013,7 +1137,6 @@ document.addEventListener("DOMContentLoaded", () => {
             actualizarResumenPagos();
         }
     }
-
 
     // ==========================================
     // PAGOS
@@ -1318,7 +1441,12 @@ document.addEventListener("DOMContentLoaded", () => {
             productosCarrito.values()
         ).map((producto) => ({
             id_producto: producto.id,
-            cantidad: producto.cantidad
+            cantidad: producto.cantidad,
+            descuento_porcentaje: (
+                normalizarPorcentaje(
+                    producto.descuentoPorcentaje
+                )
+            )
         }));
 
         const pagos = obtenerPagosFormulario();
@@ -1335,7 +1463,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             pagos,
 
-            descuento: "0.00",
             impuestos: "0.00"
         };
 
@@ -1502,6 +1629,63 @@ document.addEventListener("DOMContentLoaded", () => {
                     idProducto
                 );
             }
+        }
+    );
+
+
+    listaCarrito.addEventListener(
+        "change",
+        (evento) => {
+            const inputDescuento = evento.target.closest(
+                ".cart-discount-input"
+            );
+
+            if (!inputDescuento) {
+                return;
+            }
+
+            const idProducto = Number(
+                inputDescuento.dataset.idProducto
+            );
+
+            actualizarDescuentoProducto(
+                idProducto,
+                inputDescuento.value
+            );
+        }
+    );
+
+
+    listaCarrito.addEventListener(
+        "input",
+        (evento) => {
+            const inputDescuento = evento.target.closest(
+                ".cart-discount-input"
+            );
+
+            if (!inputDescuento) {
+                return;
+            }
+
+            const idProducto = Number(
+                inputDescuento.dataset.idProducto
+            );
+
+            const producto = productosCarrito.get(
+                idProducto
+            );
+
+            if (!producto) {
+                return;
+            }
+
+            producto.descuentoPorcentaje = (
+                normalizarPorcentaje(
+                    inputDescuento.value
+                )
+            );
+
+            calcularTotales();
         }
     );
 

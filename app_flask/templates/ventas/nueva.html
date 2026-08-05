@@ -6,6 +6,55 @@ Punto de Venta | PetsVillage
 
 {% block contenido %}
 
+<style>
+    .pos-item-discount {
+        display: grid;
+        grid-template-columns: minmax(110px, 150px) 1fr;
+        align-items: end;
+        gap: 14px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .pos-item-discount .form-label {
+        margin-bottom: 5px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .pos-item-discount__summary {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 3px;
+        text-align: right;
+    }
+
+    .pos-item-discount__summary small {
+        color: var(--color-text-muted, #64748b);
+    }
+
+    .pos-item-discount__summary strong {
+        color: var(--color-text, #1f2937);
+    }
+
+    .pos-total-row #descuento-total {
+        color: #b45309;
+    }
+
+    @media (max-width: 620px) {
+        .pos-item-discount {
+            grid-template-columns: 1fr;
+        }
+
+        .pos-item-discount__summary {
+            align-items: flex-start;
+            text-align: left;
+        }
+    }
+</style>
+
 <div class="pos-page">
 
     <div class="pos-header">
@@ -122,7 +171,7 @@ Punto de Venta | PetsVillage
                         type="button"
                         class="pos-product-card"
                         data-id="{{ producto.id_producto }}"
-                        data-nombre="{{ producto.nombre }}"
+                        data-nombre="{{ producto.nombre|e }}"
                         data-precio="{{ producto.precio_venta }}"
                         data-stock="{{ producto.stock_actual }}"
                         data-codigo="{{ producto.codigo_barras or '' }}"
@@ -216,12 +265,15 @@ Punto de Venta | PetsVillage
 
             <div id="carrito" class="pos-cart__items">
 
+                <!-- SERVICIO PRINCIPAL -->
+
                 <article
                     class="pos-cart-item"
                     data-tipo="servicio"
                     data-id="{{ orden.id_servicio }}"
                     data-id-tarifa="{{ tarifa.id_tarifa }}"
                     data-precio="{{ tarifa.precio }}"
+                    data-descuento-porcentaje="0"
                 >
 
                     <div class="pos-cart-item__icon">
@@ -241,7 +293,7 @@ Punto de Venta | PetsVillage
                                 </small>
                             </div>
 
-                            <strong>
+                            <strong id="total-servicio">
                                 ${{ "{:,.2f}".format(tarifa.precio) }}
                             </strong>
                         </div>
@@ -266,6 +318,51 @@ Punto de Venta | PetsVillage
 
                         </div>
 
+                        <div class="pos-item-discount">
+                            <div>
+                                <label
+                                    for="descuento-servicio"
+                                    class="form-label"
+                                >
+                                    Descuento
+                                </label>
+
+                                <div class="input-group input-group-sm">
+                                    <input
+                                        type="number"
+                                        id="descuento-servicio"
+                                        class="form-control discount-percentage-input"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                        value="0"
+                                        inputmode="decimal"
+                                        aria-label="Descuento del servicio"
+                                    >
+
+                                    <span class="input-group-text">
+                                        %
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="pos-item-discount__summary">
+                                <small>
+                                    Precio:
+                                    <strong id="importe-servicio">
+                                        ${{ "{:,.2f}".format(tarifa.precio) }}
+                                    </strong>
+                                </small>
+
+                                <small>
+                                    Descuento:
+                                    <strong id="descuento-monto-servicio">
+                                        -$0.00
+                                    </strong>
+                                </small>
+                            </div>
+                        </div>
+
                     </div>
 
                 </article>
@@ -281,6 +378,16 @@ Punto de Venta | PetsVillage
 
                     <strong id="subtotal">
                         ${{ "{:,.2f}".format(tarifa.precio) }}
+                    </strong>
+                </div>
+
+                <div class="pos-total-row">
+                    <span>
+                        Descuento
+                    </span>
+
+                    <strong id="descuento-total">
+                        -$0.00
                     </strong>
                 </div>
 
@@ -305,13 +412,18 @@ Punto de Venta | PetsVillage
             </button>
 
             <p class="pos-cart__notice">
-                En la siguiente fase se habilitarán pagos
-                en efectivo, tarjeta, transferencia y pago mixto.
+                Puedes aplicar un descuento porcentual independiente
+                al servicio y a cada producto antes de cobrar.
             </p>
 
         </aside>
 
     </div>
+
+    <!-- =========================================
+         MODAL DE COBRO
+    ========================================== -->
+
     <dialog id="modal-cobro" class="payment-dialog">
 
         <div class="payment-dialog__header">
@@ -418,46 +530,136 @@ Punto de Venta | PetsVillage
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const buscador = document.getElementById("buscar_producto");
-    const tarjetas = Array.from(
-        document.querySelectorAll(".pos-product-card")
+
+    // ==========================================
+    // ELEMENTOS PRINCIPALES
+    // ==========================================
+
+    const buscador = document.getElementById(
+        "buscar_producto"
     );
 
-    const carrito = document.getElementById("carrito");
-    const subtotalElemento = document.getElementById("subtotal");
-    const totalElemento = document.getElementById("total");
+    const tarjetas = Array.from(
+        document.querySelectorAll(
+            ".pos-product-card"
+        )
+    );
+
+    const carrito = document.getElementById(
+        "carrito"
+    );
+
+    const servicioElemento = document.querySelector(
+        '.pos-cart-item[data-tipo="servicio"]'
+    );
+
+    const descuentoServicioInput = document.getElementById(
+        "descuento-servicio"
+    );
+
+    const importeServicioElemento = document.getElementById(
+        "importe-servicio"
+    );
+
+    const descuentoMontoServicioElemento = document.getElementById(
+        "descuento-monto-servicio"
+    );
+
+    const totalServicioElemento = document.getElementById(
+        "total-servicio"
+    );
+
+    const subtotalElemento = document.getElementById(
+        "subtotal"
+    );
+
+    const descuentoTotalElemento = document.getElementById(
+        "descuento-total"
+    );
+
+    const totalElemento = document.getElementById(
+        "total"
+    );
+
     const cantidadElemento = document.getElementById(
         "cantidad-articulos"
     );
 
-    const productosCarrito = new Map();
-
-    const modalCobro = document.getElementById("modal-cobro");
-    const listaPagos = document.getElementById("lista-pagos");
-    const modalTotal = document.getElementById("modal-total");
-    const totalPagadoElemento = document.getElementById("total-pagado");
-    const totalRestanteElemento = document.getElementById("total-restante");
-    const totalCambioElemento = document.getElementById("total-cambio");
-    const confirmarCobro = document.getElementById("confirmar-cobro");
-    const mensajeCobro = document.getElementById("mensaje-cobro");
-
-    let totalVenta = Number(
-        document.querySelector(
-            '.pos-cart-item[data-tipo="servicio"]'
-        ).dataset.precio
+    const botonCobrar = document.getElementById(
+        "boton-cobrar"
     );
 
+    const productosCarrito = new Map();
+
+
+    // ==========================================
+    // ELEMENTOS DEL MODAL
+    // ==========================================
+
+    const modalCobro = document.getElementById(
+        "modal-cobro"
+    );
+
+    const listaPagos = document.getElementById(
+        "lista-pagos"
+    );
+
+    const modalTotal = document.getElementById(
+        "modal-total"
+    );
+
+    const totalPagadoElemento = document.getElementById(
+        "total-pagado"
+    );
+
+    const totalRestanteElemento = document.getElementById(
+        "total-restante"
+    );
+
+    const totalCambioElemento = document.getElementById(
+        "total-cambio"
+    );
+
+    const confirmarCobro = document.getElementById(
+        "confirmar-cobro"
+    );
+
+    const mensajeCobro = document.getElementById(
+        "mensaje-cobro"
+    );
+
+
+    // ==========================================
+    // ESTADO
+    // ==========================================
+
+    const precioServicio = Number(
+        servicioElemento.dataset.precio
+    );
+
+    let descuentoServicioPorcentaje = 0;
+    let subtotalVenta = 0;
+    let descuentoVenta = 0;
+    let totalVenta = 0;
     let contadorPagos = 0;
     let procesandoCobro = false;
 
+
+    // ==========================================
+    // UTILIDADES
+    // ==========================================
 
     function normalizarTexto(texto) {
         return String(texto || "")
             .toLowerCase()
             .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
             .trim();
     }
+
 
     function formatoMoneda(cantidad) {
         return new Intl.NumberFormat(
@@ -466,57 +668,165 @@ document.addEventListener("DOMContentLoaded", () => {
                 style: "currency",
                 currency: "MXN"
             }
-        ).format(cantidad);
+        ).format(
+            Number(cantidad || 0)
+        );
     }
 
+
+    function escaparHtml(texto) {
+        const elemento = document.createElement(
+            "div"
+        );
+
+        elemento.textContent = String(
+            texto || ""
+        );
+
+        return elemento.innerHTML;
+    }
+
+
+    function redondearMoneda(valor) {
+        return Number(
+            Number(valor || 0).toFixed(2)
+        );
+    }
+
+
+    function normalizarPorcentaje(valor) {
+        const numero = Number(valor);
+
+        if (!Number.isFinite(numero)) {
+            return 0;
+        }
+
+        return Math.min(
+            100,
+            Math.max(0, numero)
+        );
+    }
+
+
+    function calcularImportes(
+        precio,
+        cantidad,
+        descuentoPorcentaje
+    ) {
+        const importeBruto = redondearMoneda(
+            Number(precio) * Number(cantidad)
+        );
+
+        const porcentaje = normalizarPorcentaje(
+            descuentoPorcentaje
+        );
+
+        const descuento = redondearMoneda(
+            importeBruto * porcentaje / 100
+        );
+
+        const total = redondearMoneda(
+            importeBruto - descuento
+        );
+
+        return {
+            importeBruto,
+            porcentaje,
+            descuento,
+            total
+        };
+    }
+
+
+    // ==========================================
+    // CATÁLOGO
+    // ==========================================
+
     function filtrarProductos() {
-        const termino = normalizarTexto(buscador.value);
+        const termino = normalizarTexto(
+            buscador.value
+        );
 
         tarjetas.forEach((tarjeta) => {
             const busqueda = normalizarTexto(
                 tarjeta.dataset.busqueda
             );
 
-            tarjeta.hidden = !busqueda.includes(termino);
+            tarjeta.hidden = (
+                !busqueda.includes(termino)
+            );
         });
     }
 
-    function calcularTotales() {
-        let subtotal = Number(
-            document.querySelector(
-                '.pos-cart-item[data-tipo="servicio"]'
-            ).dataset.precio
+
+    // ==========================================
+    // CARRITO
+    // ==========================================
+
+    function agregarProducto(tarjeta) {
+        const id = String(
+            tarjeta.dataset.id
         );
 
-        productosCarrito.forEach((producto) => {
-            subtotal += producto.precio * producto.cantidad;
-        });
+        const stock = Number(
+            tarjeta.dataset.stock
+        );
 
-        totalVenta = Number(subtotal.toFixed(2));
+        if (productosCarrito.has(id)) {
+            const producto = productosCarrito.get(
+                id
+            );
 
-        subtotalElemento.textContent = formatoMoneda(totalVenta);
-        totalElemento.textContent = formatoMoneda(totalVenta);
+            if (producto.cantidad >= stock) {
+                alert(
+                    "No hay más existencias disponibles "
+                    + "para este producto."
+                );
 
-        const cantidadConceptos = 1 + productosCarrito.size;
+                return;
+            }
 
-        cantidadElemento.textContent = cantidadConceptos === 1
-            ? "1 concepto"
-            : `${cantidadConceptos} conceptos`;
+            producto.cantidad += 1;
 
-        if (modalCobro.open) {
-            actualizarResumenPagos();
+        } else {
+            productosCarrito.set(
+                id,
+                {
+                    id,
+                    nombre: tarjeta.dataset.nombre,
+                    precio: Number(
+                        tarjeta.dataset.precio
+                    ),
+                    stock,
+                    cantidad: 1,
+                    descuentoPorcentaje: 0
+                }
+            );
         }
+
+        renderizarProductosCarrito();
     }
+
 
     function renderizarProductosCarrito() {
         carrito
             .querySelectorAll(
                 '.pos-cart-item[data-tipo="producto"]'
             )
-            .forEach((elemento) => elemento.remove());
+            .forEach(
+                (elemento) => elemento.remove()
+            );
 
         productosCarrito.forEach((producto) => {
-            const elemento = document.createElement("article");
+            const calculo = calcularImportes(
+                producto.precio,
+                producto.cantidad,
+                producto.descuentoPorcentaje
+            );
+
+            const elemento = document.createElement(
+                "article"
+            );
 
             elemento.className = "pos-cart-item";
             elemento.dataset.tipo = "producto";
@@ -532,7 +842,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="pos-cart-item__heading">
                         <div>
                             <strong>
-                                ${producto.nombre}
+                                ${escaparHtml(producto.nombre)}
                             </strong>
 
                             <small>
@@ -542,9 +852,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
 
                         <strong>
-                            ${formatoMoneda(
-                                producto.precio * producto.cantidad
-                            )}
+                            ${formatoMoneda(calculo.total)}
                         </strong>
                     </div>
 
@@ -555,6 +863,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             class="pos-quantity__button"
                             data-action="decrementar"
                             data-id="${producto.id}"
+                            aria-label="Disminuir cantidad"
                         >
                             −
                         </button>
@@ -568,6 +877,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             class="pos-quantity__button"
                             data-action="incrementar"
                             data-id="${producto.id}"
+                            aria-label="Aumentar cantidad"
                         >
                             +
                         </button>
@@ -583,46 +893,157 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     </div>
 
+                    <div class="pos-item-discount">
+                        <div>
+                            <label
+                                class="form-label"
+                                for="descuento-producto-${producto.id}"
+                            >
+                                Descuento
+                            </label>
+
+                            <div class="input-group input-group-sm">
+                                <input
+                                    type="number"
+                                    id="descuento-producto-${producto.id}"
+                                    class="form-control product-discount-input"
+                                    data-id="${producto.id}"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    value="${producto.descuentoPorcentaje}"
+                                    inputmode="decimal"
+                                    aria-label="Descuento de ${escaparHtml(producto.nombre)}"
+                                >
+
+                                <span class="input-group-text">
+                                    %
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="pos-item-discount__summary">
+                            <small>
+                                Importe:
+                                <strong>
+                                    ${formatoMoneda(calculo.importeBruto)}
+                                </strong>
+                            </small>
+
+                            <small>
+                                Descuento:
+                                <strong>
+                                    -${formatoMoneda(calculo.descuento)}
+                                </strong>
+                            </small>
+                        </div>
+                    </div>
+
                 </div>
             `;
 
-            carrito.appendChild(elemento);
+            carrito.appendChild(
+                elemento
+            );
         });
 
         calcularTotales();
     }
 
-    function agregarProducto(tarjeta) {
-        const id = tarjeta.dataset.id;
-        const stock = Number(tarjeta.dataset.stock);
 
-        if (productosCarrito.has(id)) {
-            const producto = productosCarrito.get(id);
+    function actualizarServicioVisual() {
+        const calculo = calcularImportes(
+            precioServicio,
+            1,
+            descuentoServicioPorcentaje
+        );
 
-            if (producto.cantidad >= stock) {
-                alert(
-                    "No hay más existencias disponibles "
-                    + "para este producto."
-                );
-                return;
-            }
+        servicioElemento.dataset.descuentoPorcentaje = (
+            calculo.porcentaje
+        );
 
-            producto.cantidad += 1;
-        } else {
-            productosCarrito.set(
-                id,
-                {
-                    id,
-                    nombre: tarjeta.dataset.nombre,
-                    precio: Number(tarjeta.dataset.precio),
-                    stock,
-                    cantidad: 1
-                }
-            );
-        }
+        importeServicioElemento.textContent = formatoMoneda(
+            calculo.importeBruto
+        );
 
-        renderizarProductosCarrito();
+        descuentoMontoServicioElemento.textContent = (
+            `-${formatoMoneda(calculo.descuento)}`
+        );
+
+        totalServicioElemento.textContent = formatoMoneda(
+            calculo.total
+        );
     }
+
+
+    function calcularTotales() {
+        const servicio = calcularImportes(
+            precioServicio,
+            1,
+            descuentoServicioPorcentaje
+        );
+
+        let subtotal = servicio.importeBruto;
+        let descuento = servicio.descuento;
+
+        productosCarrito.forEach((producto) => {
+            const calculo = calcularImportes(
+                producto.precio,
+                producto.cantidad,
+                producto.descuentoPorcentaje
+            );
+
+            subtotal += calculo.importeBruto;
+            descuento += calculo.descuento;
+        });
+
+        subtotalVenta = redondearMoneda(
+            subtotal
+        );
+
+        descuentoVenta = redondearMoneda(
+            descuento
+        );
+
+        totalVenta = redondearMoneda(
+            subtotalVenta - descuentoVenta
+        );
+
+        actualizarServicioVisual();
+
+        subtotalElemento.textContent = formatoMoneda(
+            subtotalVenta
+        );
+
+        descuentoTotalElemento.textContent = (
+            `-${formatoMoneda(descuentoVenta)}`
+        );
+
+        totalElemento.textContent = formatoMoneda(
+            totalVenta
+        );
+
+        const cantidadConceptos = (
+            1 + productosCarrito.size
+        );
+
+        cantidadElemento.textContent = (
+            cantidadConceptos === 1
+                ? "1 concepto"
+                : `${cantidadConceptos} conceptos`
+        );
+
+        botonCobrar.disabled = totalVenta <= 0;
+
+        if (modalCobro.open) {
+            actualizarResumenPagos();
+        }
+    }
+
+
+    // ==========================================
+    // PAGOS
+    // ==========================================
 
     function crearFilaPago(
         metodo = "efectivo",
@@ -631,7 +1052,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
         contadorPagos += 1;
 
-        const fila = document.createElement("div");
+        const fila = document.createElement(
+            "div"
+        );
+
         fila.className = "payment-row";
         fila.dataset.paymentId = contadorPagos;
 
@@ -680,7 +1104,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     type="text"
                     class="form-control payment-reference"
                     maxlength="100"
-                    value="${referencia}"
+                    value="${escaparHtml(referencia)}"
                     placeholder="Opcional"
                 >
             </div>
@@ -694,13 +1118,21 @@ document.addEventListener("DOMContentLoaded", () => {
             </button>
         `;
 
-        fila.querySelector(".payment-method").value = metodo;
+        fila.querySelector(
+            ".payment-method"
+        ).value = metodo;
 
-        listaPagos.appendChild(fila);
+        listaPagos.appendChild(
+            fila
+        );
 
-        actualizarReferenciaPago(fila);
+        actualizarReferenciaPago(
+            fila
+        );
+
         actualizarResumenPagos();
     }
+
 
     function actualizarReferenciaPago(fila) {
         const metodo = fila.querySelector(
@@ -711,12 +1143,26 @@ document.addEventListener("DOMContentLoaded", () => {
             ".payment-reference-container"
         );
 
-        contenedor.hidden = metodo === "efectivo";
+        const inputReferencia = fila.querySelector(
+            ".payment-reference"
+        );
+
+        const esEfectivo = metodo === "efectivo";
+
+        contenedor.hidden = esEfectivo;
+        inputReferencia.disabled = esEfectivo;
+
+        if (esEfectivo) {
+            inputReferencia.value = "";
+        }
     }
+
 
     function obtenerPagosFormulario() {
         return Array.from(
-            listaPagos.querySelectorAll(".payment-row")
+            listaPagos.querySelectorAll(
+                ".payment-row"
+            )
         ).map((fila) => ({
             metodo: fila.querySelector(
                 ".payment-method"
@@ -732,41 +1178,69 @@ document.addEventListener("DOMContentLoaded", () => {
         }));
     }
 
+
     function actualizarResumenPagos() {
         const pagos = obtenerPagosFormulario();
 
         const totalPagado = pagos.reduce(
             (acumulado, pago) => {
-                return acumulado + Number(pago.monto || 0);
+                return acumulado + Number(
+                    pago.monto || 0
+                );
             },
             0
         );
 
-        const diferencia = totalPagado - totalVenta;
-        const restante = Math.max(totalVenta - totalPagado, 0);
-        const cambio = Math.max(diferencia, 0);
+        const restante = Math.max(
+            totalVenta - totalPagado,
+            0
+        );
 
-        modalTotal.textContent = formatoMoneda(totalVenta);
-        totalPagadoElemento.textContent = formatoMoneda(totalPagado);
-        totalRestanteElemento.textContent = formatoMoneda(restante);
-        totalCambioElemento.textContent = formatoMoneda(cambio);
+        const cambio = Math.max(
+            totalPagado - totalVenta,
+            0
+        );
 
-        const tienePagoInvalido = pagos.some((pago) => {
-            return Number(pago.monto) <= 0;
-        });
+        modalTotal.textContent = formatoMoneda(
+            totalVenta
+        );
+
+        totalPagadoElemento.textContent = formatoMoneda(
+            totalPagado
+        );
+
+        totalRestanteElemento.textContent = formatoMoneda(
+            restante
+        );
+
+        totalCambioElemento.textContent = formatoMoneda(
+            cambio
+        );
+
+        const tienePagoInvalido = pagos.some(
+            (pago) => {
+                return (
+                    !Number.isFinite(Number(pago.monto))
+                    || Number(pago.monto) <= 0
+                );
+            }
+        );
 
         const tieneEfectivo = pagos.some(
             (pago) => pago.metodo === "efectivo"
         );
 
-        const cambioValido = cambio === 0 || tieneEfectivo;
+        const cambioValido = (
+            cambio === 0
+            || tieneEfectivo
+        );
 
         confirmarCobro.disabled = (
-            pagos.length === 0 ||
-            totalPagado < totalVenta ||
-            tienePagoInvalido ||
-            !cambioValido ||
-            procesandoCobro
+            pagos.length === 0
+            || totalPagado < totalVenta
+            || tienePagoInvalido
+            || !cambioValido
+            || procesandoCobro
         );
 
         if (cambio > 0 && !tieneEfectivo) {
@@ -778,31 +1252,52 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+
     function mostrarErrorCobro(mensaje) {
         mensajeCobro.textContent = mensaje;
-        mensajeCobro.classList.remove("d-none");
+
+        mensajeCobro.classList.remove(
+            "d-none"
+        );
     }
+
 
     function ocultarErrorCobro() {
         mensajeCobro.textContent = "";
-        mensajeCobro.classList.add("d-none");
+
+        mensajeCobro.classList.add(
+            "d-none"
+        );
     }
 
+
     function abrirModalCobro() {
+        if (totalVenta <= 0) {
+            return;
+        }
+
         listaPagos.innerHTML = "";
         contadorPagos = 0;
         procesandoCobro = false;
+
+        confirmarCobro.textContent = (
+            "Confirmar cobro"
+        );
 
         crearFilaPago(
             "efectivo",
             totalVenta.toFixed(2)
         );
 
-        modalTotal.textContent = formatoMoneda(totalVenta);
+        modalTotal.textContent = formatoMoneda(
+            totalVenta
+        );
+
         ocultarErrorCobro();
 
         modalCobro.showModal();
     }
+
 
     function cerrarModalCobro() {
         if (procesandoCobro) {
@@ -811,6 +1306,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         modalCobro.close();
     }
+
+
+    // ==========================================
+    // PROCESAR COBRO
+    // ==========================================
 
     async function procesarCobro() {
         if (procesandoCobro) {
@@ -823,21 +1323,27 @@ document.addEventListener("DOMContentLoaded", () => {
             productosCarrito.values()
         ).map((producto) => ({
             id_producto: Number(producto.id),
-            cantidad: producto.cantidad
+            cantidad: producto.cantidad,
+            descuento_porcentaje: (
+                producto.descuentoPorcentaje
+            )
         }));
-
-        const servicioElemento = document.querySelector(
-            '.pos-cart-item[data-tipo="servicio"]'
-        );
 
         const payload = {
             id_orden: Number("{{ orden.id_orden }}"),
-            id_tarifa: Number(servicioElemento.dataset.idTarifa),
+            id_tarifa: Number(
+                servicioElemento.dataset.idTarifa
+            ),
+
+            servicio: {
+                descuento_porcentaje: (
+                    descuentoServicioPorcentaje
+                )
+            },
 
             productos,
             pagos,
 
-            descuento: "0.00",
             impuestos: "0.00"
         };
 
@@ -862,107 +1368,207 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!respuesta.ok || !resultado.exito) {
                 throw new Error(
-                    resultado.mensaje ||
-                    "No fue posible registrar la venta."
+                    resultado.mensaje
+                    || "No fue posible registrar la venta."
                 );
             }
 
-            confirmarCobro.textContent = "Venta registrada";
+            confirmarCobro.textContent = (
+                "Venta registrada"
+            );
 
-            window.location.href = resultado.url_redireccion;
+            window.location.href = (
+                resultado.url_redireccion
+            );
 
         } catch (error) {
             procesandoCobro = false;
-            confirmarCobro.textContent = "Confirmar cobro";
+            confirmarCobro.textContent = (
+                "Confirmar cobro"
+            );
 
-            mostrarErrorCobro(error.message);
+            mostrarErrorCobro(
+                error.message
+            );
+
             actualizarResumenPagos();
         }
     }
 
 
+    // ==========================================
+    // EVENTOS DEL CATÁLOGO Y CARRITO
+    // ==========================================
+
     tarjetas.forEach((tarjeta) => {
-        tarjeta.addEventListener("click", () => {
-            agregarProducto(tarjeta);
-            buscador.focus();
-        });
+        tarjeta.addEventListener(
+            "click",
+            () => {
+                agregarProducto(tarjeta);
+                buscador.focus();
+            }
+        );
     });
 
-    carrito.addEventListener("click", (evento) => {
-        const boton = evento.target.closest("[data-action]");
 
-        if (!boton) {
-            return;
-        }
+    carrito.addEventListener(
+        "click",
+        (evento) => {
+            const boton = evento.target.closest(
+                "[data-action]"
+            );
 
-        const id = boton.dataset.id;
-        const accion = boton.dataset.action;
-        const producto = productosCarrito.get(id);
-
-        if (!producto) {
-            return;
-        }
-
-        if (accion === "incrementar") {
-            if (producto.cantidad >= producto.stock) {
-                alert(
-                    "No hay más existencias disponibles "
-                    + "para este producto."
-                );
+            if (!boton) {
                 return;
             }
 
-            producto.cantidad += 1;
-        }
+            const id = String(
+                boton.dataset.id
+            );
 
-        if (accion === "decrementar") {
-            producto.cantidad -= 1;
+            const accion = boton.dataset.action;
+            const producto = productosCarrito.get(id);
 
-            if (producto.cantidad <= 0) {
+            if (!producto) {
+                return;
+            }
+
+            if (accion === "incrementar") {
+                if (producto.cantidad >= producto.stock) {
+                    alert(
+                        "No hay más existencias disponibles "
+                        + "para este producto."
+                    );
+
+                    return;
+                }
+
+                producto.cantidad += 1;
+            }
+
+            if (accion === "decrementar") {
+                producto.cantidad -= 1;
+
+                if (producto.cantidad <= 0) {
+                    productosCarrito.delete(id);
+                }
+            }
+
+            if (accion === "eliminar") {
                 productosCarrito.delete(id);
             }
-        }
 
-        if (accion === "eliminar") {
-            productosCarrito.delete(id);
+            renderizarProductosCarrito();
         }
+    );
 
-        renderizarProductosCarrito();
-    });
+
+    carrito.addEventListener(
+        "change",
+        (evento) => {
+            const input = evento.target.closest(
+                ".product-discount-input"
+            );
+
+            if (!input) {
+                return;
+            }
+
+            const id = String(
+                input.dataset.id
+            );
+
+            const producto = productosCarrito.get(id);
+
+            if (!producto) {
+                return;
+            }
+
+            producto.descuentoPorcentaje = (
+                normalizarPorcentaje(input.value)
+            );
+
+            input.value = producto.descuentoPorcentaje;
+
+            renderizarProductosCarrito();
+        }
+    );
+
+
+    descuentoServicioInput.addEventListener(
+        "input",
+        () => {
+            descuentoServicioPorcentaje = (
+                normalizarPorcentaje(
+                    descuentoServicioInput.value
+                )
+            );
+
+            servicioElemento.dataset.descuentoPorcentaje = (
+                descuentoServicioPorcentaje
+            );
+
+            calcularTotales();
+        }
+    );
+
+
+    descuentoServicioInput.addEventListener(
+        "change",
+        () => {
+            descuentoServicioInput.value = (
+                descuentoServicioPorcentaje
+            );
+
+            calcularTotales();
+        }
+    );
+
 
     buscador.addEventListener(
         "input",
         filtrarProductos
     );
 
-    buscador.addEventListener("keydown", (evento) => {
-        if (evento.key !== "Enter") {
-            return;
+
+    buscador.addEventListener(
+        "keydown",
+        (evento) => {
+            if (evento.key !== "Enter") {
+                return;
+            }
+
+            evento.preventDefault();
+
+            const termino = buscador.value.trim();
+
+            const productoCodigo = tarjetas.find(
+                (tarjeta) => {
+                    return (
+                        tarjeta.dataset.codigo === termino
+                        && !tarjeta.hidden
+                    );
+                }
+            );
+
+            if (productoCodigo) {
+                agregarProducto(productoCodigo);
+                buscador.value = "";
+                filtrarProductos();
+            }
         }
+    );
 
-        evento.preventDefault();
 
-        const termino = buscador.value.trim();
+    // ==========================================
+    // EVENTOS DEL MODAL
+    // ==========================================
 
-        const productoCodigo = tarjetas.find(
-            (tarjeta) =>
-                tarjeta.dataset.codigo === termino &&
-                !tarjeta.hidden
-        );
+    botonCobrar.addEventListener(
+        "click",
+        abrirModalCobro
+    );
 
-        if (productoCodigo) {
-            agregarProducto(productoCodigo);
-            buscador.value = "";
-            filtrarProductos();
-        }
-    });
-
-    document
-        .getElementById("boton-cobrar")
-        .addEventListener(
-            "click",
-            abrirModalCobro
-        );
 
     document
         .getElementById("agregar-pago")
@@ -971,12 +1577,14 @@ document.addEventListener("DOMContentLoaded", () => {
             () => crearFilaPago()
         );
 
+
     document
         .getElementById("cerrar-modal-cobro")
         .addEventListener(
             "click",
             cerrarModalCobro
         );
+
 
     document
         .getElementById("cancelar-cobro")
@@ -985,47 +1593,71 @@ document.addEventListener("DOMContentLoaded", () => {
             cerrarModalCobro
         );
 
-    document
-        .getElementById("confirmar-cobro")
-        .addEventListener(
-            "click",
-            procesarCobro
-        );
 
-    listaPagos.addEventListener("input", () => {
-        actualizarResumenPagos();
-    });
+    confirmarCobro.addEventListener(
+        "click",
+        procesarCobro
+    );
 
-    listaPagos.addEventListener("change", (evento) => {
-        const fila = evento.target.closest(".payment-row");
 
-        if (fila) {
-            actualizarReferenciaPago(fila);
+    listaPagos.addEventListener(
+        "input",
+        actualizarResumenPagos
+    );
+
+
+    listaPagos.addEventListener(
+        "change",
+        (evento) => {
+            const fila = evento.target.closest(
+                ".payment-row"
+            );
+
+            if (fila) {
+                actualizarReferenciaPago(fila);
+            }
+
+            actualizarResumenPagos();
         }
+    );
 
-        actualizarResumenPagos();
-    });
 
-    listaPagos.addEventListener("click", (evento) => {
-        const botonEliminar = evento.target.closest(
-            ".payment-remove"
-        );
+    listaPagos.addEventListener(
+        "click",
+        (evento) => {
+            const botonEliminar = evento.target.closest(
+                ".payment-remove"
+            );
 
-        if (!botonEliminar) {
-            return;
+            if (!botonEliminar) {
+                return;
+            }
+
+            botonEliminar.closest(
+                ".payment-row"
+            ).remove();
+
+            actualizarResumenPagos();
         }
+    );
 
-        botonEliminar.closest(".payment-row").remove();
 
-        actualizarResumenPagos();
-    });
+    modalCobro.addEventListener(
+        "cancel",
+        (evento) => {
+            evento.preventDefault();
+            cerrarModalCobro();
+        }
+    );
 
-    modalCobro.addEventListener("cancel", (evento) => {
-        evento.preventDefault();
-        cerrarModalCobro();
-    });
 
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
+
+    actualizarServicioVisual();
     calcularTotales();
+    filtrarProductos();
 });
 </script>
 

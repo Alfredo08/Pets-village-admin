@@ -13,6 +13,7 @@ class Venta:
     }
 
     DOS_DECIMALES = Decimal("0.01")
+    CIEN = Decimal("100.00")
 
     ####################################################
     # CONVERTIR A DECIMAL
@@ -27,6 +28,96 @@ class Venta:
             )
         except (InvalidOperation, ValueError, TypeError):
             return None
+
+    ####################################################
+    # VALIDAR PORCENTAJE DE DESCUENTO
+    ####################################################
+
+    @classmethod
+    def convertir_porcentaje(cls, valor):
+        porcentaje = cls.convertir_decimal(
+            valor if valor not in (None, "") else "0"
+        )
+
+        if porcentaje is None:
+            raise ValueError(
+                "El porcentaje de descuento no es válido."
+            )
+
+        if porcentaje < 0 or porcentaje > 100:
+            raise ValueError(
+                "El descuento debe estar entre 0% y 100%."
+            )
+
+        return porcentaje
+
+    ####################################################
+    # CALCULAR IMPORTES DE UN CONCEPTO
+    ####################################################
+
+    @classmethod
+    def calcular_detalle(
+        cls,
+        precio_unitario,
+        cantidad,
+        descuento_porcentaje=0
+    ):
+        precio_unitario = cls.convertir_decimal(
+            precio_unitario
+        )
+
+        if precio_unitario is None or precio_unitario < 0:
+            raise ValueError(
+                "El precio del concepto no es válido."
+            )
+
+        try:
+            cantidad_decimal = Decimal(str(cantidad))
+        except (InvalidOperation, ValueError, TypeError):
+            raise ValueError(
+                "La cantidad del concepto no es válida."
+            )
+
+        if cantidad_decimal <= 0:
+            raise ValueError(
+                "La cantidad debe ser mayor que cero."
+            )
+
+        porcentaje = cls.convertir_porcentaje(
+            descuento_porcentaje
+        )
+
+        importe_bruto = (
+            precio_unitario * cantidad_decimal
+        ).quantize(
+            cls.DOS_DECIMALES,
+            rounding=ROUND_HALF_UP
+        )
+
+        descuento = (
+            importe_bruto
+            * porcentaje
+            / cls.CIEN
+        ).quantize(
+            cls.DOS_DECIMALES,
+            rounding=ROUND_HALF_UP
+        )
+
+        subtotal = (
+            importe_bruto - descuento
+        ).quantize(
+            cls.DOS_DECIMALES,
+            rounding=ROUND_HALF_UP
+        )
+
+        return {
+            "precio_unitario": precio_unitario,
+            "cantidad": cantidad_decimal,
+            "importe_bruto": importe_bruto,
+            "descuento_porcentaje": porcentaje,
+            "descuento": descuento,
+            "subtotal": subtotal
+        }
 
     ####################################################
     # VALIDAR INFORMACIÓN DEL COBRO
@@ -245,6 +336,21 @@ class Venta:
                         "El precio del servicio no es válido."
                     )
 
+                descuento_servicio_porcentaje = (
+                    data.get("servicio", {}).get(
+                        "descuento_porcentaje",
+                        0
+                    )
+                )
+
+                calculo_servicio = cls.calcular_detalle(
+                    precio_unitario=precio_servicio,
+                    cantidad=1,
+                    descuento_porcentaje=(
+                        descuento_servicio_porcentaje
+                    )
+                )
+
                 detalles = []
 
                 detalles.append({
@@ -253,12 +359,21 @@ class Venta:
                     "id_tarifa": tarifa["id_tarifa"],
                     "id_producto": None,
                     "descripcion": orden["nombre_servicio"],
-                    "cantidad": Decimal("1.00"),
-                    "precio_unitario": precio_servicio,
-                    "subtotal": precio_servicio
+                    "cantidad": calculo_servicio["cantidad"],
+                    "precio_unitario": (
+                        calculo_servicio["precio_unitario"]
+                    ),
+                    "descuento_porcentaje": (
+                        calculo_servicio[
+                            "descuento_porcentaje"
+                        ]
+                    ),
+                    "descuento": calculo_servicio["descuento"],
+                    "subtotal": calculo_servicio["subtotal"]
                 })
 
-                subtotal = precio_servicio
+                subtotal = calculo_servicio["importe_bruto"]
+                descuento = calculo_servicio["descuento"]
 
                 # ======================================
                 # 3. VALIDAR PRODUCTOS Y STOCK
@@ -335,13 +450,15 @@ class Venta:
                         producto["precio_venta"]
                     )
 
-                    cantidad_decimal = Decimal(cantidad)
-
-                    subtotal_producto = (
-                        precio_unitario * cantidad_decimal
-                    ).quantize(
-                        cls.DOS_DECIMALES,
-                        rounding=ROUND_HALF_UP
+                    calculo_producto = cls.calcular_detalle(
+                        precio_unitario=precio_unitario,
+                        cantidad=cantidad,
+                        descuento_porcentaje=(
+                            producto_solicitado.get(
+                                "descuento_porcentaje",
+                                0
+                            )
+                        )
                     )
 
                     detalles.append({
@@ -350,14 +467,28 @@ class Venta:
                         "id_tarifa": None,
                         "id_producto": id_producto,
                         "descripcion": producto["nombre"],
-                        "cantidad": cantidad_decimal,
-                        "precio_unitario": precio_unitario,
-                        "subtotal": subtotal_producto
+                        "cantidad": calculo_producto["cantidad"],
+                        "precio_unitario": (
+                            calculo_producto["precio_unitario"]
+                        ),
+                        "descuento_porcentaje": (
+                            calculo_producto[
+                                "descuento_porcentaje"
+                            ]
+                        ),
+                        "descuento": calculo_producto["descuento"],
+                        "subtotal": calculo_producto["subtotal"]
                     })
 
-                    subtotal += subtotal_producto
+                    subtotal += calculo_producto["importe_bruto"]
+                    descuento += calculo_producto["descuento"]
 
                 subtotal = subtotal.quantize(
+                    cls.DOS_DECIMALES,
+                    rounding=ROUND_HALF_UP
+                )
+
+                descuento = descuento.quantize(
                     cls.DOS_DECIMALES,
                     rounding=ROUND_HALF_UP
                 )
@@ -366,18 +497,9 @@ class Venta:
                 # 4. CALCULAR TOTALES
                 # ======================================
 
-                descuento = cls.convertir_decimal(
-                    data.get("descuento", "0")
-                )
-
                 impuestos = cls.convertir_decimal(
                     data.get("impuestos", "0")
                 )
-
-                if descuento is None or descuento < 0:
-                    raise ValueError(
-                        "El descuento no es válido."
-                    )
 
                 if impuestos is None or impuestos < 0:
                     raise ValueError(
@@ -555,6 +677,8 @@ class Venta:
                         descripcion,
                         cantidad,
                         precio_unitario,
+                        descuento_porcentaje,
+                        descuento,
                         subtotal
                     )
                     VALUES (
@@ -566,6 +690,8 @@ class Venta:
                         %(descripcion)s,
                         %(cantidad)s,
                         %(precio_unitario)s,
+                        %(descuento_porcentaje)s,
+                        %(descuento)s,
                         %(subtotal)s
                     );
                 """
@@ -1365,6 +1491,7 @@ class Venta:
 
                 detalles = []
                 subtotal = Decimal("0.00")
+                descuento = Decimal("0.00")
                 ids_vistos = set()
 
                 for producto_solicitado in productos_solicitados:
@@ -1467,16 +1594,15 @@ class Venta:
                             "no es válido."
                         )
 
-                    cantidad_decimal = Decimal(
-                        cantidad
-                    )
-
-                    subtotal_producto = (
-                        precio_unitario
-                        * cantidad_decimal
-                    ).quantize(
-                        cls.DOS_DECIMALES,
-                        rounding=ROUND_HALF_UP
+                    calculo_producto = cls.calcular_detalle(
+                        precio_unitario=precio_unitario,
+                        cantidad=cantidad,
+                        descuento_porcentaje=(
+                            producto_solicitado.get(
+                                "descuento_porcentaje",
+                                0
+                            )
+                        )
                     )
 
                     detalles.append({
@@ -1485,15 +1611,29 @@ class Venta:
                         "id_tarifa": None,
                         "id_producto": id_producto,
                         "descripcion": producto["nombre"],
-                        "cantidad": cantidad_decimal,
-                        "precio_unitario": precio_unitario,
-                        "subtotal": subtotal_producto,
+                        "cantidad": calculo_producto["cantidad"],
+                        "precio_unitario": (
+                            calculo_producto["precio_unitario"]
+                        ),
+                        "descuento_porcentaje": (
+                            calculo_producto[
+                                "descuento_porcentaje"
+                            ]
+                        ),
+                        "descuento": calculo_producto["descuento"],
+                        "subtotal": calculo_producto["subtotal"],
                         "stock_anterior": stock_actual
                     })
 
-                    subtotal += subtotal_producto
+                    subtotal += calculo_producto["importe_bruto"]
+                    descuento += calculo_producto["descuento"]
 
                 subtotal = subtotal.quantize(
+                    cls.DOS_DECIMALES,
+                    rounding=ROUND_HALF_UP
+                )
+
+                descuento = descuento.quantize(
                     cls.DOS_DECIMALES,
                     rounding=ROUND_HALF_UP
                 )
@@ -1502,24 +1642,12 @@ class Venta:
                 # 3. CALCULAR TOTALES
                 # ======================================
 
-                descuento = cls.convertir_decimal(
-                    data.get(
-                        "descuento",
-                        "0.00"
-                    )
-                )
-
                 impuestos = cls.convertir_decimal(
                     data.get(
                         "impuestos",
                         "0.00"
                     )
                 )
-
-                if descuento is None or descuento < 0:
-                    raise ValueError(
-                        "El descuento no es válido."
-                    )
 
                 if impuestos is None or impuestos < 0:
                     raise ValueError(
@@ -1722,6 +1850,8 @@ class Venta:
                         descripcion,
                         cantidad,
                         precio_unitario,
+                        descuento_porcentaje,
+                        descuento,
                         subtotal
                     )
                     VALUES (
@@ -1733,6 +1863,8 @@ class Venta:
                         %(descripcion)s,
                         %(cantidad)s,
                         %(precio_unitario)s,
+                        %(descuento_porcentaje)s,
+                        %(descuento)s,
                         %(subtotal)s
                     );
                 """
@@ -1753,6 +1885,12 @@ class Venta:
                             ],
                             "precio_unitario": detalle[
                                 "precio_unitario"
+                            ],
+                            "descuento_porcentaje": detalle[
+                                "descuento_porcentaje"
+                            ],
+                            "descuento": detalle[
+                                "descuento"
                             ],
                             "subtotal": detalle[
                                 "subtotal"
