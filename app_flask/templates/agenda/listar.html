@@ -48,6 +48,13 @@ Agenda
             >
 
         </form>
+        <button
+            type="button"
+            id="btn-recordatorios"
+            class="btn btn-primary"
+        >
+            📧 Enviar recordatorios de mañana
+        </button>
 
         <a
             href="/agenda/nueva?fecha={{ fecha_seleccionada }}"
@@ -294,5 +301,82 @@ Agenda
     </section>
 
 {% endif %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const boton = document.getElementById(
+        "btn-recordatorios"
+    );
+
+    if (!boton) {
+        return;
+    }
+
+    boton.addEventListener("click", async function () {
+
+        const confirmar = confirm(
+            "¿Enviar los recordatorios de las citas de mañana?"
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        const textoOriginal = boton.innerHTML;
+
+        boton.disabled = true;
+        boton.innerHTML = "📧 Enviando...";
+
+        try {
+
+            const response = await fetch(
+                "/agenda/enviar-recordatorios",
+                {
+                    method: "POST"
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.exito) {
+
+                throw new Error(
+                    data.mensaje ||
+                    "No fue posible enviar los recordatorios."
+                );
+            }
+
+            let mensaje =
+                "Recordatorios procesados.\n\n" +
+                "Enviados: " + data.enviados + "\n" +
+                "Omitidos: " + data.omitidos + "\n" +
+                "Errores: " + data.errores;
+
+            alert(mensaje);
+
+        } catch (error) {
+
+            console.error(
+                "Error enviando recordatorios:",
+                error
+            );
+
+            alert(
+                "No fue posible enviar los recordatorios.\n\n" +
+                error.message
+            );
+
+        } finally {
+
+            boton.disabled = false;
+            boton.innerHTML = textoOriginal;
+
+        }
+
+    });
+
+});
+</script>
 
 {% endblock %}

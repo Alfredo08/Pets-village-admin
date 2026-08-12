@@ -226,6 +226,7 @@ class OrdenServicio:
                 os.*,
 
                 c.nombre AS nombre_cliente,
+                c.correo AS correo_cliente,
                 m.nombre AS nombre_mascota,
                 s.nombre AS nombre_servicio,
 

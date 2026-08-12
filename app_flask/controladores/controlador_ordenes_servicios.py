@@ -16,6 +16,7 @@ from app_flask import app
 from app_flask.helpers.horarios import obtener_bloques_horarios
 from app_flask.modelos.modelo_orden_servicio import OrdenServicio
 from app_flask.modelos.modelo_usuario import Usuario
+from app_flask.servicios.servicio_correo import ServicioCorreo
 
 
 from datetime import date, timedelta
@@ -118,6 +119,163 @@ def agenda():
         agenda=agenda,
         fecha_seleccionada=fecha_seleccionada
     )
+
+@app.route("/agenda/enviar-recordatorios", methods=["POST"])
+def enviar_recordatorios():
+    from datetime import date, timedelta
+
+    try:
+        # ==========================================
+        # FECHA DE MAÑANA
+        # ==========================================
+
+        manana = date.today() + timedelta(days=1)
+
+        fecha_manana = manana.strftime("%Y-%m-%d")
+
+        # ==========================================
+        # OBTENER ÓRDENES
+        # ==========================================
+
+        ordenes = OrdenServicio.obtener_por_fecha(
+            fecha_manana
+        )
+
+        enviados = 0
+        omitidos = 0
+        errores = 0
+
+        detalle_errores = []
+
+        # ==========================================
+        # PROCESAR CADA ORDEN
+        # ==========================================
+
+        for orden in ordenes:
+
+            correo = orden.get(
+                "correo_cliente"
+            )
+
+            # --------------------------------------
+            # SIN CORREO
+            # --------------------------------------
+
+            if not correo:
+
+                omitidos += 1
+                continue
+
+            # --------------------------------------
+            # DATOS DEL RECORDATORIO
+            # --------------------------------------
+
+            nombre_cliente = orden.get(
+                "nombre_cliente",
+                "Cliente"
+            )
+
+            nombre_mascota = orden.get(
+                "nombre_mascota",
+                "tu mascota"
+            )
+
+            nombre_servicio = orden.get(
+                "nombre_servicio",
+                "Servicio"
+            )
+
+            # --------------------------------------
+            # FECHA
+            # --------------------------------------
+
+            fecha = orden.get(
+                "fecha",
+                fecha_manana
+            )
+
+            if hasattr(fecha, "strftime"):
+                fecha = fecha.strftime(
+                    "%d/%m/%Y"
+                )
+
+            # --------------------------------------
+            # HORA
+            # --------------------------------------
+
+            hora = orden.get("hora_inicio")
+
+            if hasattr(hora, "strftime"):
+                hora = hora.strftime("%H:%M")
+
+            elif hora:
+                hora = str(hora)
+
+            else:
+                hora = "Por confirmar"
+
+            # --------------------------------------
+            # ENVIAR
+            # --------------------------------------
+
+            resultado = (
+                ServicioCorreo.enviar_recordatorio(
+                    destinatario=correo,
+                    nombre_cliente=nombre_cliente,
+                    nombre_mascota=nombre_mascota,
+                    fecha=fecha,
+                    hora=hora,
+                    servicio=nombre_servicio
+                )
+            )
+
+            # --------------------------------------
+            # RESULTADO
+            # --------------------------------------
+
+            if resultado.get("exito"):
+
+                enviados += 1
+
+            else:
+
+                errores += 1
+
+                detalle_errores.append({
+                    "id_orden": orden.get(
+                        "id_orden"
+                    ),
+                    "correo": correo,
+                    "mensaje": resultado.get(
+                        "mensaje"
+                    )
+                })
+
+        # ==========================================
+        # RESPUESTA
+        # ==========================================
+
+        return {
+            "exito": True,
+            "fecha": fecha_manana,
+            "total_ordenes": len(ordenes),
+            "enviados": enviados,
+            "omitidos": omitidos,
+            "errores": errores,
+            "detalle_errores": detalle_errores
+        }
+
+    except Exception as error:
+
+        print(
+            "Error enviando recordatorios:",
+            error
+        )
+
+        return {
+            "exito": False,
+            "mensaje": str(error)
+        }, 500
 
 ####################################################
 # FORMULARIO NUEVA ORDEN
