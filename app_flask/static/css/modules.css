@@ -3312,3 +3312,59 @@ ORDER CARD
         grid-template-columns: 1fr;
     }
 }
+
+/* =========================================================
+   MODAL DE RECORDATORIOS
+========================================================= */
+.modal-recordatorios-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 99999;
+}
+.modal-recordatorios {
+    width: min(480px, 100%);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.20);
+    overflow: hidden;
+    animation: modalRecordatoriosEntrada .18s ease-out;
+}
+@keyframes modalRecordatoriosEntrada {
+    from { opacity: 0; transform: translateY(-10px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-recordatorios-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 22px; border-bottom:1px solid #eee;
+}
+.modal-recordatorios-header h3 { margin:0; font-size:19px; font-weight:600; color:#333; }
+.modal-recordatorios-close { border:0; background:transparent; font-size:28px; line-height:1; color:#888; cursor:pointer; padding:0 4px; }
+.modal-recordatorios-close:hover { color:#333; }
+.modal-recordatorios-body { padding:24px 22px; color:#555; font-size:15px; line-height:1.6; }
+.modal-recordatorios-body p { margin:0 0 12px; }
+.modal-recordatorios-resumen { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:20px; }
+.modal-recordatorios-estadistica { padding:15px 10px; background:#f7f7f7; border-radius:10px; text-align:center; }
+.modal-recordatorios-estadistica strong { display:block; font-size:23px; color:#333; }
+.modal-recordatorios-estadistica span { display:block; margin-top:4px; font-size:12px; color:#777; }
+.modal-recordatorios-footer { display:flex; justify-content:flex-end; gap:10px; padding:16px 22px 20px; border-top:1px solid #eee; }
+.modal-recordatorios-btn { border:0; border-radius:8px; padding:10px 18px; font-size:14px; cursor:pointer; transition:.15s ease; }
+.modal-recordatorios-btn-cancelar { background:#eee; color:#444; }
+.modal-recordatorios-btn-cancelar:hover { background:#e2e2e2; }
+.modal-recordatorios-btn-confirmar { background:#333; color:#fff; }
+.modal-recordatorios-btn-confirmar:hover { opacity:.9; }
+.modal-recordatorios-btn-confirmar:disabled { opacity:.6; cursor:not-allowed; }
+.modal-recordatorios-loading { text-align:center; padding:10px 0; }
+.modal-recordatorios-spinner { width:32px; height:32px; margin:0 auto 15px; border:3px solid #eee; border-top-color:#555; border-radius:50%; animation:modalRecordatoriosSpinner .8s linear infinite; }
+@keyframes modalRecordatoriosSpinner { to { transform:rotate(360deg); } }
+.modal-recordatorios-exito { text-align:center; }
+.modal-recordatorios-icono { font-size:42px; margin-bottom:10px; }
+@media (max-width:500px) {
+    .modal-recordatorios-resumen { grid-template-columns:1fr; }
+    .modal-recordatorios-footer { flex-direction:column-reverse; }
+    .modal-recordatorios-btn { width:100%; }
+}

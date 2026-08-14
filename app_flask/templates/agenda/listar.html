@@ -302,31 +302,339 @@ Agenda
 
 {% endif %}
 
+<!-- =========================================================
+     MODAL DE RECORDATORIOS
+========================================================= -->
+
+<div
+    id="modal-recordatorios"
+    class="modal-recordatorios-overlay"
+    style="display: none;"
+>
+    <div class="modal-recordatorios">
+
+        <div class="modal-recordatorios-header">
+            <h3 id="modal-recordatorios-titulo">
+                Enviar recordatorios
+            </h3>
+
+            <button
+                type="button"
+                id="modal-recordatorios-cerrar"
+                class="modal-recordatorios-close"
+                aria-label="Cerrar"
+            >
+                &times;
+            </button>
+        </div>
+
+        <div
+            id="modal-recordatorios-contenido"
+            class="modal-recordatorios-body"
+        >
+            <!-- Contenido dinámico -->
+        </div>
+
+        <div
+            id="modal-recordatorios-footer"
+            class="modal-recordatorios-footer"
+        >
+            <!-- Botones dinámicos -->
+        </div>
+
+    </div>
+</div>
 <script>
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const boton = document.getElementById(
         "btn-recordatorios"
     );
 
-    if (!boton) {
+    const modal = document.getElementById(
+        "modal-recordatorios"
+    );
+
+    const titulo = document.getElementById(
+        "modal-recordatorios-titulo"
+    );
+
+    const contenido = document.getElementById(
+        "modal-recordatorios-contenido"
+    );
+
+    const footer = document.getElementById(
+        "modal-recordatorios-footer"
+    );
+
+    const cerrar = document.getElementById(
+        "modal-recordatorios-cerrar"
+    );
+
+
+    if (!boton || !modal) {
         return;
     }
 
-    boton.addEventListener("click", async function () {
 
-        const confirmar = confirm(
-            "¿Enviar los recordatorios de las citas de mañana?"
-        );
+    /* =========================================================
+       ABRIR MODAL
+    ========================================================= */
 
-        if (!confirmar) {
-            return;
+    function abrirModal() {
+
+        modal.style.display = "flex";
+
+        document.body.style.overflow = "hidden";
+    }
+
+
+    /* =========================================================
+       CERRAR MODAL
+    ========================================================= */
+
+    function cerrarModal() {
+
+        modal.style.display = "none";
+
+        document.body.style.overflow = "";
+    }
+
+
+    /* =========================================================
+       MODAL DE CONFIRMACIÓN
+    ========================================================= */
+
+    function mostrarConfirmacion() {
+
+        titulo.textContent =
+            "Enviar recordatorios de mañana";
+
+        contenido.innerHTML = `
+            <p>
+                ¿Deseas enviar los recordatorios
+                de las citas programadas para mañana?
+            </p>
+
+            <p>
+                Se enviará un correo a cada cliente
+                que tenga una dirección registrada.
+            </p>
+        `;
+
+        footer.innerHTML = `
+
+            <button
+                type="button"
+                id="btn-modal-cancelar"
+                class="modal-recordatorios-btn
+                       modal-recordatorios-btn-cancelar"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="button"
+                id="btn-modal-confirmar"
+                class="modal-recordatorios-btn
+                       modal-recordatorios-btn-confirmar"
+            >
+                📧 Enviar recordatorios
+            </button>
+
+        `;
+
+        abrirModal();
+
+
+        document
+            .getElementById("btn-modal-cancelar")
+            .addEventListener(
+                "click",
+                cerrarModal
+            );
+
+
+        document
+            .getElementById("btn-modal-confirmar")
+            .addEventListener(
+                "click",
+                enviarRecordatorios
+            );
+    }
+
+
+    /* =========================================================
+       MODAL DE CARGA
+    ========================================================= */
+
+    function mostrarCargando() {
+
+        titulo.textContent =
+            "Enviando recordatorios";
+
+        contenido.innerHTML = `
+
+            <div class="modal-recordatorios-loading">
+
+                <div
+                    class="modal-recordatorios-spinner"
+                ></div>
+
+                <p>
+                    Estamos enviando los recordatorios
+                    de las citas de mañana.
+                </p>
+
+                <p>
+                    Por favor espera...
+                </p>
+
+            </div>
+
+        `;
+
+        footer.innerHTML = "";
+
+        abrirModal();
+    }
+
+
+    /* =========================================================
+       MODAL DE RESULTADO
+    ========================================================= */
+
+    function mostrarResultado(data) {
+
+        titulo.textContent =
+            "Recordatorios procesados";
+
+        let icono = "✓";
+
+        let mensaje =
+            "Los recordatorios fueron procesados correctamente.";
+
+        if (data.errores > 0) {
+
+            icono = "⚠️";
+
+            mensaje =
+                "Los recordatorios fueron procesados, " +
+                "pero algunos envíos presentaron errores.";
         }
 
-        const textoOriginal = boton.innerHTML;
 
-        boton.disabled = true;
-        boton.innerHTML = "📧 Enviando...";
+        contenido.innerHTML = `
+
+            <div class="modal-recordatorios-exito">
+
+                <div
+                    class="modal-recordatorios-icono"
+                >
+                    ${icono}
+                </div>
+
+                <p>
+                    ${mensaje}
+                </p>
+
+                <div
+                    class="modal-recordatorios-resumen"
+                >
+
+                    <div
+                        class="modal-recordatorios-estadistica"
+                    >
+                        <strong>
+                            ${data.enviados}
+                        </strong>
+
+                        <span>
+                            Enviados
+                        </span>
+                    </div>
+
+
+                    <div
+                        class="modal-recordatorios-estadistica"
+                    >
+                        <strong>
+                            ${data.omitidos}
+                        </strong>
+
+                        <span>
+                            Omitidos
+                        </span>
+                    </div>
+
+
+                    <div
+                        class="modal-recordatorios-estadistica"
+                    >
+                        <strong>
+                            ${data.errores}
+                        </strong>
+
+                        <span>
+                            Errores
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        footer.innerHTML = `
+
+            <button
+                type="button"
+                id="btn-modal-cerrar-resultado"
+                class="modal-recordatorios-btn
+                       modal-recordatorios-btn-confirmar"
+            >
+                Cerrar
+            </button>
+
+        `;
+
+
+        document
+            .getElementById(
+                "btn-modal-cerrar-resultado"
+            )
+            .addEventListener(
+                "click",
+                cerrarModal
+            );
+    }
+
+
+    /* =========================================================
+       ENVIAR RECORDATORIOS
+    ========================================================= */
+
+    async function enviarRecordatorios() {
+
+        const botonConfirmar =
+            document.getElementById(
+                "btn-modal-confirmar"
+            );
+
+        if (botonConfirmar) {
+
+            botonConfirmar.disabled = true;
+
+            botonConfirmar.textContent =
+                "Enviando...";
+        }
+
+
+        mostrarCargando();
+
 
         try {
 
@@ -337,9 +645,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             );
 
-            const data = await response.json();
 
-            if (!response.ok || !data.exito) {
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !data.exito
+            ) {
 
                 throw new Error(
                     data.mensaje ||
@@ -347,13 +661,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
             }
 
-            let mensaje =
-                "Recordatorios procesados.\n\n" +
-                "Enviados: " + data.enviados + "\n" +
-                "Omitidos: " + data.omitidos + "\n" +
-                "Errores: " + data.errores;
 
-            alert(mensaje);
+            mostrarResultado(data);
+
 
         } catch (error) {
 
@@ -362,21 +672,126 @@ document.addEventListener("DOMContentLoaded", function () {
                 error
             );
 
-            alert(
-                "No fue posible enviar los recordatorios.\n\n" +
-                error.message
-            );
 
-        } finally {
+            titulo.textContent =
+                "No fue posible completar el envío";
 
-            boton.disabled = false;
-            boton.innerHTML = textoOriginal;
+
+            contenido.innerHTML = `
+
+                <div
+                    class="modal-recordatorios-exito"
+                >
+
+                    <div
+                        class="modal-recordatorios-icono"
+                    >
+                        ⚠️
+                    </div>
+
+                    <p>
+                        Ocurrió un problema al enviar
+                        los recordatorios.
+                    </p>
+
+                    <p>
+                        ${error.message}
+                    </p>
+
+                </div>
+
+            `;
+
+
+            footer.innerHTML = `
+
+                <button
+                    type="button"
+                    id="btn-modal-cerrar-error"
+                    class="modal-recordatorios-btn
+                           modal-recordatorios-btn-confirmar"
+                >
+                    Cerrar
+                </button>
+
+            `;
+
+
+            document
+                .getElementById(
+                    "btn-modal-cerrar-error"
+                )
+                .addEventListener(
+                    "click",
+                    cerrarModal
+                );
 
         }
 
-    });
+    }
+
+
+    /* =========================================================
+       BOTÓN PRINCIPAL
+    ========================================================= */
+
+    boton.addEventListener(
+        "click",
+        mostrarConfirmacion
+    );
+
+
+    /* =========================================================
+       CERRAR
+    ========================================================= */
+
+    cerrar.addEventListener(
+        "click",
+        cerrarModal
+    );
+
+
+    /* =========================================================
+       CERRAR HACIENDO CLICK FUERA
+    ========================================================= */
+
+    modal.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target === modal
+            ) {
+
+                cerrarModal();
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       ESC
+    ========================================================= */
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Escape" &&
+                modal.style.display === "flex"
+            ) {
+
+                cerrarModal();
+
+            }
+
+        }
+    );
 
 });
-</script>
 
+</script>
 {% endblock %}
